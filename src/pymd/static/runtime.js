@@ -2,6 +2,12 @@ function pymdInitPlot(containerId, inputSpecs, grid, traceType, traceOptions) {
   const container = document.getElementById(containerId);
   const controlsEl = document.createElement('div');
   const plotEl = document.createElement('div');
+  controlsEl.style.flex = '0 0 auto';
+  // flex-basis 0 + min-height 0 lets this shrink below Plotly's intrinsic
+  // default size so it fills exactly what's left under the controls,
+  // instead of overflowing the fixed-height container (see render.py).
+  plotEl.style.flex = '1 1 0';
+  plotEl.style.minHeight = '0';
   container.appendChild(controlsEl);
   container.appendChild(plotEl);
 
@@ -26,8 +32,10 @@ function pymdInitPlot(containerId, inputSpecs, grid, traceType, traceOptions) {
   function draw() {
     const data = currentData();
     const trace = Object.assign({ type: traceType, x: data[0], y: data[1] }, traceOptions);
-    Plotly.react(plotEl, [trace], {});
+    Plotly.react(plotEl, [trace], { autosize: true }, { responsive: true });
   }
+
+  window.addEventListener('resize', () => Plotly.Plots.resize(plotEl));
 
   inputSpecs.forEach((spec) => {
     pane

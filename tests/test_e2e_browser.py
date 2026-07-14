@@ -70,3 +70,14 @@ def test_slider_updates_plot_with_no_console_errors(built_site, page):
     assert before != after
     assert console_errors == []
     assert page_errors == []
+
+    # Regression check: the book-theme's iframe renderer fixes this iframe's
+    # own height (a padding-bottom aspect-ratio box on the embedding page --
+    # see transform.py's `_iframe_node` docstring) and ignores any `style`
+    # we set on the mdast node, so render.py/runtime.js instead lay out the
+    # controls+plot in a flexbox that fills exactly whatever height the
+    # iframe gets. If that ever regresses, the body silently gains a
+    # vertical scrollbar instead of throwing -- assert directly on it.
+    body = plot_frame.locator("body")
+    overflow = body.evaluate("el => el.scrollHeight - el.clientHeight")
+    assert overflow <= 1
