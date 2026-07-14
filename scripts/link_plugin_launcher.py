@@ -34,9 +34,8 @@ import shutil
 import stat
 import sys
 from pathlib import Path
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
-VENV_DIR = REPO_ROOT / ".venv"
+import sysconfig
+VENV_DIR = Path(sysconfig.get_path("scripts")).parent
 FIXED_NAME = "pymd-plugin-bin.exe"
 
 
