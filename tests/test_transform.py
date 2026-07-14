@@ -34,6 +34,7 @@ def test_transform_document_replaces_plot_node_with_html():
     assert children_types == ["pymd-input-slider", "pymd-calc-python", "html"]
 
     html_node = result["children"][2]
+    assert "pymdInitPlot(" in html_node["value"]
     assert '"0": 0' in html_node["value"]
     assert '"1": 2' in html_node["value"]
     assert '"2": 4' in html_node["value"]

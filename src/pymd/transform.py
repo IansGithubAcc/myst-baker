@@ -1,4 +1,10 @@
+import inspect
+
 from pymd import precompute, render
+
+
+def inspect_params(func):
+    return set(inspect.signature(func).parameters)
 
 
 def _collect_nodes(ast):
@@ -37,7 +43,22 @@ def transform_document(ast):
             )
         func = calc_namespace[function_name]
         grid_result = precompute.compute_grid(func, inputs)
-        html = render.render_plot(child, grid_result)
+
+        input_specs = [
+            {
+                "name": name,
+                "value": options["value"],
+                "min": options["min"],
+                "max": options["max"],
+                "step": options["step"],
+            }
+            for name, options in (
+                (n["arg"], n["options"])
+                for n in ast["children"]
+                if n["type"] == "pymd-input-slider" and n["arg"] in inspect_params(func)
+            )
+        ]
+        html = render.render_plot(child, grid_result, input_specs)
         new_children.append({"type": "html", "value": html})
 
     return {**ast, "children": new_children}
