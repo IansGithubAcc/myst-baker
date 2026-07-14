@@ -9,6 +9,9 @@ project:
   # github:
   toc:
     - file: content/index.md
+  plugins:
+    - type: executable
+      path: pymd_plugin.cmd
 site:
   template: book-theme
   # options:
