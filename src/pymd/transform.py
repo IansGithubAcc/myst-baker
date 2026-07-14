@@ -4,11 +4,12 @@ from pymd import precompute, render
 
 
 def inspect_params(func):
-    return set(inspect.signature(func).parameters)
+    return list(inspect.signature(func).parameters)
 
 
 def _collect_nodes(ast):
     inputs = {}
+    input_nodes = {}
     calc_namespace = {}
     plot_nodes = []
 
@@ -18,16 +19,17 @@ def _collect_nodes(ast):
             name = child["arg"]
             options = child["options"]
             inputs[name] = (options["min"], options["max"], options["step"])
+            input_nodes[name] = child
         elif node_type == "pymd-calc-python":
             exec(child["body"], calc_namespace)
         elif node_type == "pymd-plot":
             plot_nodes.append(child)
 
-    return inputs, calc_namespace, plot_nodes
+    return inputs, input_nodes, calc_namespace, plot_nodes
 
 
 def transform_document(ast):
-    inputs, calc_namespace, plot_nodes = _collect_nodes(ast)
+    inputs, input_nodes, calc_namespace, plot_nodes = _collect_nodes(ast)
 
     new_children = []
     for child in ast["children"]:
@@ -47,16 +49,13 @@ def transform_document(ast):
         input_specs = [
             {
                 "name": name,
-                "value": options["value"],
-                "min": options["min"],
-                "max": options["max"],
-                "step": options["step"],
+                "value": input_nodes[name]["options"]["value"],
+                "min": input_nodes[name]["options"]["min"],
+                "max": input_nodes[name]["options"]["max"],
+                "step": input_nodes[name]["options"]["step"],
             }
-            for name, options in (
-                (n["arg"], n["options"])
-                for n in ast["children"]
-                if n["type"] == "pymd-input-slider" and n["arg"] in inspect_params(func)
-            )
+            for name in inspect_params(func)
+            if name in input_nodes
         ]
         html = render.render_plot(child, grid_result, input_specs)
         new_children.append({"type": "html", "value": html})
