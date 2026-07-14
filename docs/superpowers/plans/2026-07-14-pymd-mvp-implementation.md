@@ -41,6 +41,7 @@ tests/
     test_precompute.py                 # new
     test_directives.py                 # new
     test_transform.py                  # new
+    test_plugin.py                     # new: added in fix round, --directive JSON-array regression test
     test_e2e_browser.py                # new: Playwright
 ```
 
@@ -51,7 +52,7 @@ tests/
 
 ---
 
-### Task 1: Project bootstrap and MyST baseline
+### Task 1: Project bootstrap and MyST baseline — ✅ complete (commits 5dd497e..2602654)
 
 **Files:**
 - Modify: `pyproject.toml`
@@ -62,7 +63,7 @@ tests/
 - Consumes: nothing (first task)
 - Produces: a working `uv`-managed environment with `myst` on PATH inside the venv, and a `myst.yml` project that builds successfully with zero pymd involvement. Later tasks assume `uv run myst build` and `uv run myst start` work.
 
-- [ ] **Step 1: Add `mystmd` as a dependency**
+- [x] **Step 1: Add `mystmd` as a dependency**
 
 Edit `pyproject.toml` to add the dependency:
 
@@ -91,19 +92,19 @@ build-backend = "hatchling.build"
 packages = ["src/pymd"]
 ```
 
-- [ ] **Step 2: Sync the environment and verify `myst` is available**
+- [x] **Step 2: Sync the environment and verify `myst` is available**
 
 Run: `uv sync`
 Then run: `uv run myst --version`
 Expected: prints a version string (e.g. `v1.9.0` or newer) with no error. If this fails, `mystmd`'s PyPI package auto-installs a Node.js runtime on first use — re-run `uv run myst --version` once more before troubleshooting further, since the first invocation may need to finish that setup.
 
-- [ ] **Step 3: Scaffold the MyST project**
+- [x] **Step 3: Scaffold the MyST project**
 
 Run: `uv run myst init` (accept prompts with defaults; this creates `myst.yml`)
 
 Confirm `myst.yml` now exists at the repo root with a `project:` key.
 
-- [ ] **Step 4: Create a trivial fixture page and verify baseline build**
+- [x] **Step 4: Create a trivial fixture page and verify baseline build**
 
 Create `content/index.md`:
 
@@ -118,32 +119,35 @@ Edit `myst.yml` so its `project.toc` (or default content discovery) includes `co
 Run: `uv run myst build`
 Expected: build succeeds, producing output under `_build/` with no errors.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add pyproject.toml myst.yml content/index.md uv.lock
 git commit -m "chore: bootstrap mystmd toolchain and baseline project"
 ```
 
+**As actually built:** `README.md` was also added (hatchling hard-requires the `readme` file declared in `pyproject.toml` to exist), and `.gitignore` picked up a `_build` entry `myst init` appended automatically. Both were correct, necessary consequences of the steps above, not scope creep.
+
 ---
 
-### Task 2: Executable plugin skeleton and spawn verification
+### Task 2: Executable plugin skeleton and spawn verification — ✅ complete (commits 2602654..5b57b1c)
 
-This task exists specifically to de-risk whether MyST can actually spawn our plugin as a subprocess, on every platform pymd needs to support — not just this dev machine. **A prior attempt at this task found that MyST cannot spawn a raw `.py` script (or a `.cmd` wrapper around one) on Windows at all**: a `.py` file relies on shebang-line interpretation, which is a POSIX kernel feature with no Windows equivalent (`spawn EFTYPE` — Windows' process creation only understands real compiled executables); a `.cmd` wrapper needs Node's `shell: true` spawn option to run at all (Node hardened this post-CVE-2024-27980), which mystmd's plugin loader never passes and gives no config knob to request (`spawn EINVAL`). Neither is a bug in our code — both are fundamental to how Windows process creation and Node's spawn security model work.
+This task exists specifically to de-risk whether MyST can actually spawn our plugin as a subprocess, on every platform pymd needs to support — not just this dev machine. **A first attempt at this task (commit `1edb97d`, superseded) tried a raw `.py` script and a `.cmd` wrapper, and found MyST cannot spawn either on Windows at all**: a `.py` file relies on shebang-line interpretation, which is a POSIX kernel feature with no Windows equivalent (`spawn EFTYPE` — Windows' process creation only understands real compiled executables); a `.cmd` wrapper needs Node's `shell: true` spawn option to run at all (Node hardened this post-CVE-2024-27980), which mystmd's plugin loader never passes and gives no config knob to request (`spawn EINVAL`). Neither is a bug in our code — both are fundamental to how Windows process creation and Node's spawn security model work.
 
-The fix: don't hand MyST a raw script at all. Declare the plugin as a Python packaging `console_scripts` entry point instead, and let `uv sync` generate the real, platform-native executable for us — exactly the mechanism every cross-platform Python CLI tool (`black`, `ruff`, `pytest`, ...) already relies on to get a working Windows `.exe` without anyone hand-writing one. On POSIX this generates an ordinary shebang'd script (works exactly as MyST's docs assume); on Windows it generates a real compiled launcher `.exe`. Same `pyproject.toml` entry, same `myst.yml` reference, no per-platform code of our own.
+The fix actually shipped: don't hand MyST a raw script at all. Declare the plugin as a Python packaging `console_scripts` entry point instead, and let `uv sync` generate the real, platform-native executable for us — exactly the mechanism every cross-platform Python CLI tool (`black`, `ruff`, `pytest`, ...) already relies on to get a working Windows `.exe` without anyone hand-writing one. On POSIX this generates an ordinary shebang'd script (works exactly as MyST's docs assume); on Windows it generates a real compiled launcher `.exe`. Same `pyproject.toml` entry, same `myst.yml` reference, no per-platform code of our own.
 
 **Files:**
 - Modify: `pyproject.toml` (add `[project.scripts]` entry point)
 - Create: `src/pymd/__init__.py`
 - Create: `src/pymd/plugin.py`
 - Modify: `myst.yml`
+- Create: `scripts/link_plugin_launcher.py`
 
 **Interfaces:**
 - Consumes: nothing new
 - Produces: `pymd.plugin.main()` — the CLI entrypoint function, callable with `sys.argv`-style args, reads a JSON AST from stdin, writes a JSON AST to stdout. Later tasks (3, 5) extend `PLUGIN_SPEC` and the `--transform document` branch defined here; the dispatch shape (`--directive <name>`, `--transform <name>`, no-args-prints-spec) is what later tasks plug into.
 
-- [ ] **Step 1: Write the plugin package skeleton**
+- [x] **Step 1: Write the plugin package skeleton**
 
 Create `src/pymd/__init__.py` (empty).
 
@@ -193,7 +197,7 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 2: Declare the console_scripts entry point and regenerate the environment**
+- [x] **Step 2: Declare the console_scripts entry point and regenerate the environment**
 
 Edit `pyproject.toml`, adding:
 
@@ -210,9 +214,9 @@ Verify the launcher was generated:
 
 Run it directly to confirm it works before involving MyST at all: `uv run pymd-plugin` (no args) — expected output is the `PLUGIN_SPEC` JSON printed to stdout.
 
-**Confirmed finding from a prior attempt at this step:** mystmd's plugin loader checks the `path` with a literal file-existence check (`fs.existsSync`), not a `PATH` search — a bare `pymd-plugin` name does NOT resolve. It also means the real launcher's location differs by OS (`.venv/Scripts/pymd-plugin.exe` on Windows vs. `.venv/bin/pymd-plugin` on Linux/Mac), so `myst.yml` cannot reference either path directly and still be identical across platforms. Step 3 below fixes this with one fixed-name file both platforms produce.
+**Confirmed finding:** mystmd's plugin loader checks the `path` with a literal file-existence check (`fs.existsSync`), not a `PATH` search — a bare `pymd-plugin` name does NOT resolve. It also means the real launcher's location differs by OS (`.venv/Scripts/pymd-plugin.exe` on Windows vs. `.venv/bin/pymd-plugin` on Linux/Mac), so `myst.yml` cannot reference either path directly and still be identical across platforms. Step 3 below fixes this with one fixed-name file both platforms produce.
 
-- [ ] **Step 3: Add a setup helper that copies the launcher to one fixed, OS-independent name**
+- [x] **Step 3: Add a setup helper that copies the launcher to one fixed, OS-independent name**
 
 Create `scripts/link_plugin_launcher.py`:
 
@@ -259,7 +263,9 @@ if __name__ == "__main__":
 Run: `uv run python scripts/link_plugin_launcher.py`
 Expected: prints `Copied ... -> .../.venv/pymd-plugin-bin.exe`, and that file now exists.
 
-- [ ] **Step 4: Register the plugin in `myst.yml` and verify MyST can spawn it — run against the real CLI**
+**As actually shipped, `_find_real_launcher`/`launcher_source` checks the Windows candidate path before the POSIX one unconditionally** (not gated on `sys.platform` at the point of choosing which candidate to look for first, only in the final `dest.chmod` branch). Harmless given a real `.venv` only ever produces one candidate; flagged as known, accepted debt in the final whole-branch review (see note at the end of this document).
+
+- [x] **Step 4: Register the plugin in `myst.yml` and verify MyST can spawn it — run against the real CLI**
 
 Edit `myst.yml`, adding under the `project:` key:
 
@@ -274,7 +280,7 @@ Run: `uv run myst build --debug` (the `--debug` flag surfaces plugin stderr outp
 
 Expected: build succeeds with no spawn errors. This path is identical regardless of OS — only Step 3's helper script branches on platform, `myst.yml` itself does not.
 
-- [ ] **Step 5: Prove the transform is actually being invoked (not just present)**
+- [x] **Step 5: Prove the transform is actually being invoked (not just present)**
 
 Temporarily add a line to `main()`'s `--transform` branch in `src/pymd/plugin.py`: `print("pymd transform ran", file=sys.stderr)` (the `import sys` already present covers this).
 
@@ -282,18 +288,20 @@ Run: `uv run myst build --debug` again and confirm `pymd transform ran` appears 
 
 Remove that debug print line once confirmed (it did its job; keep the file clean).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add pyproject.toml uv.lock src/pymd/__init__.py src/pymd/plugin.py myst.yml scripts/link_plugin_launcher.py
 git commit -m "feat: add executable plugin skeleton via console_scripts entry point"
 ```
 
-Note: `.venv/pymd-plugin-bin.exe` itself is inside the gitignored `.venv/` directory and is never committed — only the helper script that produces it is. Anyone setting up the project runs `uv sync` then `uv run python scripts/link_plugin_launcher.py` (this two-step setup should be documented in the README as part of finishing this task, since it's now a real, permanent part of the project's setup instructions, not a one-off).
+Note: `.venv/pymd-plugin-bin.exe` itself is inside the gitignored `.venv/` directory and is never committed — only the helper script that produces it is. Setup is documented in README.md's "Setup" section: `uv sync`, then `uv run python scripts/link_plugin_launcher.py`.
+
+**Known accepted gap:** the POSIX side of this mechanism (launcher path, `.exe`-suffix-on-every-platform behavior) is reasoned from documented POSIX semantics, not empirically verified — all development and testing happened on a Windows machine. Worth a first-run sanity check on Linux/Mac CI.
 
 ---
 
-### Task 3: Precompute engine (pure Python, no MyST involved)
+### Task 3: Precompute engine (pure Python, no MyST involved) — ✅ complete (commits 5b57b1c..a20b8bf)
 
 **Files:**
 - Create: `src/pymd/precompute.py`
@@ -312,7 +320,7 @@ Note: `.venv/pymd-plugin-bin.exe` itself is inside the gitignored `.venv/` direc
 
   Task 5 calls `compute_grid` directly with a real calc function and the inputs collected from the page's `input-slider` nodes.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `tests/test_precompute.py`:
 
@@ -393,12 +401,14 @@ def test_max_grid_size_defaults_to_10000(monkeypatch):
     assert max_grid_size() == 10_000
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+(This is 9 test functions — an earlier note in this plan said "8 tests," a miscount; 9 is correct and expected.)
+
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `uv run pytest tests/test_precompute.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'pymd.precompute'`
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `src/pymd/precompute.py`:
 
@@ -469,26 +479,29 @@ def compute_grid(func, inputs):
     return results
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `uv run pytest tests/test_precompute.py -v`
-Expected: all 8 tests PASS
+Expected: all 9 tests PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/pymd/precompute.py tests/test_precompute.py
 git commit -m "feat: add precompute grid engine with budget guard"
 ```
 
+**Gap surfaced in final review, fixed in the fix round (see "Final Whole-Branch Review — Fix Round" at the end of this document):** `compute_grid`'s key building (`"|".join(str(v) for v in combo)`) used Python's `str()`, while `runtime.js`'s `currentKey()` uses JS's `String()` on the same values. These diverge for whole-number floats: Python's `str(1.0) == "1.0"`, JS's `String(1) == "1"`. Since `input_values` produces floats whenever `min`/`max`/`step` aren't all integers, any fractional `:step:` whose grid includes a whole-number point silently mismatched between the precomputed key and the client's lookup key, breaking the plot in the browser. Not exercised by the MVP's own fixture at the time (`step: 1`, all-integer grid) or the Playwright test. Fixed via `precompute._stringify`.
+
 ---
 
-### Task 4: Directive placeholder-node registration
+### Task 4: Directive placeholder-node registration — ✅ complete (commits a20b8bf..885bc29)
 
 **Files:**
 - Create: `src/pymd/directives.py`
 - Modify: `src/pymd/plugin.py`
 - Test: `tests/test_directives.py`
+- Modify: `content/index.md` (fixture block for real-tool verification)
 
 **Interfaces:**
 - Consumes: nothing from precompute.py (directives.py only shapes placeholder nodes, doesn't compute anything)
@@ -496,7 +509,7 @@ git commit -m "feat: add precompute grid engine with budget guard"
   - `INPUT_SLIDER_DIRECTIVE`, `CALC_PYTHON_DIRECTIVE`, `PLOT_DIRECTIVE` — dicts appended to `PLUGIN_SPEC["directives"]` in `plugin.py`
   - `build_placeholder_node(directive_name: str, arg: str | None, options: dict, body: str) -> dict` — used by `plugin.py`'s `--directive` branch. Task 5's `transform.py` consumes the placeholder node shape this produces: `{"type": "pymd-input-slider" | "pymd-calc-python" | "pymd-plot", "arg": ..., "options": {...}, "body": "..."}`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/test_directives.py`:
 
@@ -546,14 +559,17 @@ def test_build_placeholder_node_rejects_unknown_directive():
         build_placeholder_node("unknown-thing", arg=None, options={}, body="")
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `uv run pytest tests/test_directives.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'pymd.directives'`
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
-Create `src/pymd/directives.py`:
+Create `src/pymd/directives.py`. **As actually shipped, two corrections were required beyond this literal starting code — both are documented inline as comments at point of use in the real file, and are load-bearing, not optional polish:**
+
+1. `--directive` stdout must be a JSON **array** (`[node]`), not a bare dict — mystmd assigns it to the directive node's `.children` and calls `.children.map(...)`; a bare dict crashes with `TypeError: node3.children.map is not a function`. (Fixed in `plugin.py`, Step 5 below.)
+2. Directive arg/option `type` values must be mystmd's lowercase `ParseTypesEnum` strings (`"string"`/`"number"`), not capitalized (`"String"`/`"Number"` as shown below) — capitalized values are silently accepted but produce `undefined` for every arg/option value in the built mdast, with no error or warning. **This applies to every directive that declares `arg`/`options` — `INPUT_SLIDER_DIRECTIVE` and `PLOT_DIRECTIVE` both need it; only `INPUT_SLIDER_DIRECTIVE`'s comment currently explains why in the shipped code (known, accepted documentation gap — `PLOT_DIRECTIVE` has the identical fix applied with no local comment explaining it).**
 
 ```python
 KNOWN_DIRECTIVES = {"input-slider", "calc-python", "plot"}
@@ -561,12 +577,12 @@ KNOWN_DIRECTIVES = {"input-slider", "calc-python", "plot"}
 INPUT_SLIDER_DIRECTIVE = {
     "name": "input-slider",
     "doc": "A numeric slider input, bound to a name referenced by calc function parameters.",
-    "arg": {"type": "String", "doc": "The input's name"},
+    "arg": {"type": "string", "doc": "The input's name"},
     "options": {
-        "value": {"type": "Number", "doc": "Initial value"},
-        "min": {"type": "Number", "doc": "Minimum value"},
-        "max": {"type": "Number", "doc": "Maximum value"},
-        "step": {"type": "Number", "doc": "Step size"},
+        "value": {"type": "number", "doc": "Initial value"},
+        "min": {"type": "number", "doc": "Minimum value"},
+        "max": {"type": "number", "doc": "Maximum value"},
+        "step": {"type": "number", "doc": "Step size"},
     },
 }
 
@@ -579,9 +595,10 @@ CALC_PYTHON_DIRECTIVE = {
 PLOT_DIRECTIVE = {
     "name": "plot",
     "doc": "A Plotly output block. The argument is a Plotly trace type (e.g. scatter).",
-    "arg": {"type": "String", "doc": "Plotly trace type"},
+    "arg": {"type": "string", "doc": "Plotly trace type"},
     "options": {
-        "data": {"type": "String", "doc": "Name of the calc function providing this plot's data"},
+        "data": {"type": "string", "doc": "Name of the calc function providing this plot's data"},
+        "mode": {"type": "string", "doc": "Plotly scatter trace mode, e.g. 'lines'"},
     },
 }
 
@@ -597,12 +614,14 @@ def build_placeholder_node(directive_name, arg, options, body):
     }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+**Note on `PLOT_DIRECTIVE["options"]`:** mystmd silently strips any directive option not explicitly declared here (no error surfaced to the author) — this is the exact class of bug the `mode` fix above addresses. Only `data` and `mode` are currently whitelisted. The design spec's "any Plotly output type... via the same generic pass-through" claim is not fully true as implemented: any *option* beyond `data`/`mode` (e.g. `:line: {...}`) silently vanishes today. This is a known, accepted gap for the MVP's scope (one slider, one scatter plot, `data`+`mode` only) — flagged here so the next person adding a plot option doesn't have to rediscover it.
+
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `uv run pytest tests/test_directives.py -v`
 Expected: all 4 tests PASS
 
-- [ ] **Step 5: Wire the directives into `PLUGIN_SPEC` and the `--directive` dispatch branch**
+- [x] **Step 5: Wire the directives into `PLUGIN_SPEC` and the `--directive` dispatch branch**
 
 Modify `src/pymd/plugin.py`:
 
@@ -636,13 +655,16 @@ In the `--directive` branch of `main()`, replace the no-op passthrough with:
             options=payload.get("options", {}),
             body=payload.get("body", ""),
         )
-        _write_ast_to_stdout(node)
+        # mystmd assigns our stdout directly to the directive node's
+        # `.children` and later calls `.children.map(...)` — a bare dict
+        # crashes with "node3.children.map is not a function". Must be a list.
+        _write_ast_to_stdout([node])
         return
 ```
 
-(The exact shape of what MyST sends on stdin for a `--directive` invocation — e.g. whether `arg`/`options`/`body` are top-level keys or nested — is one of the schema details flagged in Global Constraints as unverified against public docs. Step 6 below verifies and corrects this against the real tool.)
+**Gap surfaced in final review, fixed in the fix round (see note at end of document):** no unit test asserted that this branch emits a JSON array rather than a bare object; this was only verified via a real `myst build` run originally. Closed by `tests/test_plugin.py::test_directive_dispatch_writes_json_array_not_bare_object`, which drives `plugin.main` directly and protects against a regression class that has already happened once in this codebase.
 
-- [ ] **Step 6: Verify against the real `myst` CLI and correct any schema mismatches**
+- [x] **Step 6: Verify against the real `myst` CLI and correct any schema mismatches**
 
 Add a fixture block to `content/index.md`:
 
@@ -655,11 +677,9 @@ Add a fixture block to `content/index.md`:
 ```
 ````
 
-Run: `uv run myst build --debug`
+Run: `uv run myst build --debug`. The two corrections described in Step 3 above were found and fixed this way.
 
-If MyST reports a schema error (rejected option type names, unexpected `arg`/`options`/`body` field names on stdin, etc.), read the error message and adjust `directives.py`'s directive specs and/or `plugin.py`'s stdin-reading code to match what MyST actually sends/expects. Repeat until the build succeeds. Document any corrections made as a comment in `directives.py` next to the field that needed adjusting.
-
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/pymd/directives.py src/pymd/plugin.py tests/test_directives.py content/index.md
@@ -668,7 +688,7 @@ git commit -m "feat: register input-slider/calc-python/plot directives as placeh
 
 ---
 
-### Task 5: Document-transform wiring
+### Task 5: Document-transform wiring — ✅ complete (commits 885bc29..655f590)
 
 **Files:**
 - Create: `src/pymd/transform.py`
@@ -677,9 +697,9 @@ git commit -m "feat: register input-slider/calc-python/plot directives as placeh
 
 **Interfaces:**
 - Consumes: `pymd.precompute.compute_grid(func, inputs)` from Task 3; the placeholder node shape `{"type": "pymd-input-slider"|"pymd-calc-python"|"pymd-plot", "arg", "options", "body"}` from Task 4
-- Produces: `transform_document(ast: dict) -> dict` — takes a full MyST page AST (a tree whose nodes may include `pymd-input-slider`/`pymd-calc-python`/`pymd-plot` nodes anywhere in `children`), returns a new AST with every `pymd-plot` node replaced by `{"type": "html", "value": "<...>"}`. Task 6's `render.py` is called from here to build that HTML string — this task defines the call site: `render.render_plot(plot_node, grid_result, plotly_trace_type)`.
+- Produces: `transform_document(ast: dict) -> dict` — takes a full MyST page AST, returns a new AST with every `pymd-plot` node replaced by `{"type": "html", "value": "<...>"}`. **This task's own fixtures/tests build a flat, unwrapped AST (`pymd-*` nodes as direct children of `root`) — Task 7 later discovers real mystmd wraps page content in an intermediate `block` node, and generalizes this task's node-walking to recurse arbitrary depth (see Task 7).** Task 6's `render.py` is called from here to build the HTML string — this task defines the call site as `render.render_plot(plot_node, grid_result)` (2 args); Task 6 Step 3 extends it to a 3rd `input_specs` argument.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/test_transform.py`:
 
@@ -751,12 +771,12 @@ def test_transform_document_raises_when_plot_references_unknown_function():
         transform_document(_page_ast(input_node, calc_node, plot_node))
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `uv run pytest tests/test_transform.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'pymd.transform'`
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `src/pymd/transform.py`:
 
@@ -806,7 +826,9 @@ def transform_document(ast):
     return {**ast, "children": new_children}
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+(This shallow, direct-children-only version is what Task 5 ships. Task 7 replaces it with an arbitrary-depth recursive version once real mystmd's `block`-wrapping is discovered — see Task 7's section.)
+
+- [x] **Step 4: Run test to verify it passes**
 
 This will still fail until `render.py` exists (Task 6). For now, create a minimal stub so this task's tests can pass on their own: create `src/pymd/render.py` with just enough to satisfy the test's assertions (checking that the JSON grid values appear in the output):
 
@@ -821,7 +843,7 @@ def render_plot(plot_node, grid_result):
 Run: `uv run pytest tests/test_transform.py -v`
 Expected: both tests PASS
 
-- [ ] **Step 5: Wire `transform_document` into the plugin's `--transform` dispatch**
+- [x] **Step 5: Wire `transform_document` into the plugin's `--transform` dispatch**
 
 Modify `src/pymd/plugin.py`'s `--transform` branch:
 
@@ -835,7 +857,7 @@ Modify `src/pymd/plugin.py`'s `--transform` branch:
 
 Add `from pymd import transform` to the top of `plugin.py`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/pymd/transform.py src/pymd/render.py src/pymd/plugin.py tests/test_transform.py
@@ -844,18 +866,19 @@ git commit -m "feat: wire document transform (input+calc+plot nodes -> precomput
 
 ---
 
-### Task 6: Client runtime and full HTML rendering
+### Task 6: Client runtime and full HTML rendering — ✅ complete (commits 655f590..776c1dc)
 
 **Files:**
 - Create: `src/pymd/static/runtime.js`
 - Modify: `src/pymd/render.py`
+- Modify: `src/pymd/transform.py`
 - Test: `tests/test_transform.py` (extend)
 
 **Interfaces:**
-- Consumes: the `render_plot(plot_node, grid_result)` call site from Task 5 (signature unchanged — this task fills in its real implementation)
-- Produces: the final `<div>`/`<script>` HTML string embedded in the page, containing: a Tweakpane mount point + init call, a Plotly container `<div>`, the grid JSON, and the runtime script tag. Task 7/8 depend on this actually working in a browser.
+- Consumes: the `render_plot(plot_node, grid_result)` call site from Task 5 (signature grows to 3 args here)
+- Produces: the final HTML string embedded in the page, containing: a Tweakpane mount point + init call, a Plotly container `<div>`, the grid JSON, and the runtime script tag. Task 7/8 depend on this actually working in a browser. **As actually shipped, Task 7 later replaces the plain `{"type": "html", ...}` embedding with a `data:` URI `<iframe>` — see Task 7 — because mystmd's real renderer never executes script tags inside raw `html` nodes. `runtime.js` itself, once loaded correctly, was NOT changed by that later fix.**
 
-- [ ] **Step 1: Write the client runtime**
+- [x] **Step 1: Write the client runtime**
 
 Create `src/pymd/static/runtime.js`:
 
@@ -901,7 +924,9 @@ function pymdInitPlot(containerId, inputSpecs, grid, traceType, traceOptions) {
 }
 ```
 
-- [ ] **Step 2: Write the full `render_plot` implementation**
+**Bug found in final whole-branch review, fixed in the fix round (see note at end of document):** `currentKey()`'s `String(params[spec.name])` diverged from `precompute.py`'s Python-side `str(v)` for whole-number floats (`String(1) === "1"` in JS vs. `str(1.0) == "1.0"` in Python). Only manifests with a fractional `:step:` whose grid includes a whole-number point — not exercised by the MVP's integer-step fixture. Fixed on the Python side (`precompute._stringify`); the JS side needed no change since JS numbers already stringify this way natively.
+
+- [x] **Step 2: Write the full `render_plot` implementation**
 
 Modify `src/pymd/render.py`:
 
@@ -941,9 +966,11 @@ pymdInitPlot(
 """
 ```
 
-- [ ] **Step 3: Update `transform.py` to pass `input_specs` through**
+(This CDN-`<script src>`-for-Tweakpane version is what Task 6 ships. Task 7 discovers Tweakpane v4's CDN bundle is ESM-only and replaces this with a `<script type="module">` + `import` — see Task 7. It also discovers the whole returned string needs to become a self-contained document embedded via a `data:` URI iframe rather than returned as raw HTML — also Task 7.)
 
-Modify `src/pymd/transform.py`'s `transform_document` — it needs each plot's matched input specs (name/value/min/max/step), not just the grid result. Update the loop body:
+- [x] **Step 3: Update `transform.py` to pass `input_specs` through, ordered by function-parameter declaration**
+
+Modify `src/pymd/transform.py`'s `transform_document` — it needs each plot's matched input specs (name/value/min/max/step), not just the grid result, **in the same order `precompute.matched_inputs` uses (function-parameter declaration order), not document order** — a real ordering bug was found and fixed here during this task (see below).
 
 ```python
         function_name = child["options"]["data"]
@@ -955,19 +982,21 @@ Modify `src/pymd/transform.py`'s `transform_document` — it needs each plot's m
         func = calc_namespace[function_name]
         grid_result = precompute.compute_grid(func, inputs)
 
+        input_nodes = {
+            n["arg"]: n["options"]
+            for n in ast["children"]
+            if n["type"] == "pymd-input-slider"
+        }
         input_specs = [
             {
                 "name": name,
-                "value": options["value"],
-                "min": options["min"],
-                "max": options["max"],
-                "step": options["step"],
+                "value": input_nodes[name]["value"],
+                "min": input_nodes[name]["min"],
+                "max": input_nodes[name]["max"],
+                "step": input_nodes[name]["step"],
             }
-            for name, options in (
-                (n["arg"], n["options"])
-                for n in ast["children"]
-                if n["type"] == "pymd-input-slider" and n["arg"] in inspect_params(func)
-            )
+            for name in inspect_params(func)
+            if name in input_nodes
         ]
         html = render.render_plot(child, grid_result, input_specs)
 ```
@@ -979,10 +1008,12 @@ import inspect
 
 
 def inspect_params(func):
-    return set(inspect.signature(func).parameters)
+    return list(inspect.signature(func).parameters)
 ```
 
-- [ ] **Step 4: Update the existing transform test for the new `render_plot` signature**
+**Why `inspect_params` returns an ordered `list`, not a `set`:** a first version of this task built `input_specs` by iterating `ast["children"]` (document order) and used a `set` for `inspect_params`. Review found this breaks any 2+-parameter plot function whose sliders are declared out of parameter order in the markdown: `precompute.compute_grid`'s lookup keys are built in function-parameter order, but the client runtime's key would be built in document order — a mismatch that silently returns `undefined` and crashes `Plotly.react` in the browser. Fixed by making `inspect_params` return an ordered list and building `input_specs` by iterating it (matching `precompute.matched_inputs`'s own ordering exactly). A regression test (`test_transform_document_orders_input_specs_by_function_parameter_order`, declaring sliders in reverse-of-parameter order) was added and confirmed to fail against the old document-order version.
+
+- [x] **Step 4: Update the existing transform test for the new `render_plot` signature**
 
 Modify `tests/test_transform.py` — since `render_plot` now takes a third argument, and the stub written in Task 5 no longer matches, update the test assertions to check for the container div and the `pymdInitPlot(` call instead of raw JSON (the JSON is now nested inside the script call):
 
@@ -1019,12 +1050,14 @@ def test_transform_document_replaces_plot_node_with_html():
     assert '"2": 4' in html_node["value"]
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+(Task 7 later updates this assertion again to decode a `data:` URI iframe instead of reading `.value` directly — see Task 7.)
+
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `uv run pytest tests/test_transform.py -v`
-Expected: both tests PASS
+Expected: both tests PASS (plus the new ordering regression test)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/pymd/static/runtime.js src/pymd/render.py src/pymd/transform.py tests/test_transform.py
@@ -1033,16 +1066,47 @@ git commit -m "feat: render Tweakpane+Plotly client runtime into precomputed plo
 
 ---
 
-### Task 7: Full fixture page and real end-to-end build
+### Task 7: Full fixture page and real end-to-end build — ✅ complete (commits 776c1dc..4dfab4b)
 
 **Files:**
 - Modify: `content/index.md`
+- Modify: `src/pymd/directives.py` (add `mode` option)
+- Modify: `src/pymd/transform.py` (recursive node-walking, iframe node)
+- Modify: `src/pymd/render.py` (standalone HTML document, ESM Tweakpane load)
+- Modify: `tests/test_transform.py` (decode iframe instead of raw `html` node)
 
 **Interfaces:**
 - Consumes: everything from Tasks 1–6
 - Produces: a real, complete demo page proving the whole pipeline works via the actual `myst` CLI. Task 8's Playwright test loads this page's built output.
 
-- [ ] **Step 1: Write the full fixture page**
+**This task was originally scoped as "write the fixture, build, manually verify" — in practice, running the real pipeline for the first time surfaced 4 real integration bugs invisible to every prior unit test, all fixed here per this task's own "fix it before moving on" instruction:**
+
+1. **mystmd silently strips undeclared directive options.** The fixture's `:mode: lines` option on the `plot` block was dropped with no warning until `PLOT_DIRECTIVE["options"]` explicitly declared `mode` (see Task 4's shipped code, which already reflects this fix).
+2. **mystmd wraps page content in an intermediate `{"type": "block", "children": [...]}` node.** `transform.py`'s original node-walking (Task 5) assumed `pymd-*` nodes were direct children of the AST root — against a real build, this made `transform_document` a **silent no-op**, while every existing unit test (which built flat, unwrapped ASTs) kept passing. Fixed by rewriting the node-collection/replacement logic to recurse into `children` at arbitrary depth, preserving all other node keys:
+
+```python
+def _iter_nodes(node):
+    yield node
+    for child in node.get("children", []):
+        yield from _iter_nodes(child)
+
+
+def _replace_plots(node, replacements):
+    new_children = []
+    for child in node.get("children", []):
+        if id(child) in replacements:
+            new_children.append(replacements[id(child)])
+        else:
+            new_children.append(_replace_plots(child, replacements))
+    return {**node, "children": new_children} if "children" in node else node
+```
+
+   (Exact helper names/shapes may differ slightly in the shipped code — the essential property is arbitrary-depth recursion that preserves non-`children` keys, verified by `test_transform_document_finds_plot_node_wrapped_in_block_node` added in the review-fix round below.)
+
+3. **mdast `html` nodes are never executed by mystmd's SPA renderer** — a deliberate XSS boundary (script tags inside a raw `html` node are inert). Fixed by replacing the `{"type": "html", "value": ...}` node with a `data:` URI `<iframe>` node instead: the entire interactive document (widget + plot + JSON + runtime JS) is base64-encoded as the iframe's `src`, and `<iframe>` tags *are* reconstructed and rendered as real elements by mystmd, with their own document/origin where scripts do execute. This is a deliberate, justified route around the html-node sanitization boundary — `calc-python`'s `exec()` already makes the page author fully trusted at build time, so this doesn't expand pymd's trust model, but it should not be used in any context where multiple authors of differing trust levels share a build.
+4. **Tweakpane v4's CDN distribution is ESM-only** (confirmed via its `package.json`: `"type": "module"`, no UMD/global build) — a plain `<script src=...>` tag never defines `window.Tweakpane`. Fixed by loading it via `<script type="module">import { Pane } from "..."; window.Tweakpane = { Pane };</script>`, with `runtime.js`'s body and the `pymdInitPlot(...)` call inlined into that same module script (module scripts are deferred, so a separate later classic script calling `pymdInitPlot` could otherwise race the import). Plotly remains a plain classic `<script src>` (its UMD build runs synchronously). `runtime.js` itself was not changed.
+
+- [x] **Step 1: Write the full fixture page**
 
 Replace the contents of `content/index.md` with:
 
@@ -1069,48 +1133,73 @@ def get_plot_data(a):
 ```
 ````
 
-- [ ] **Step 2: Build for real**
+- [x] **Step 2: Build for real**
 
 Run: `uv run myst build --debug`
-Expected: build succeeds with no errors.
+Expected: build succeeds with no errors. (Required the 4 fixes above to actually reach this state.)
 
-- [ ] **Step 3: Manually verify in a browser**
+- [x] **Step 3: Verify in a real browser**
 
-Run: `uv run myst start`
-Open the printed local URL, confirm: the slider renders, dragging it updates the line plot, and the browser console shows no errors.
+Verified via Playwright/Chromium (headless) against a real `uv run myst start` server, across two independent clean-build runs:
+- Exactly 1 `<iframe>` in the outer page (the plot embed); inside it, exactly 1 `div.js-plotly-plot` and 1 Tweakpane root (`.tp-rotv` — Tweakpane v4's actual root container class, not `.tp-dfwv` as initially guessed).
+- Initial trace (`a=3`) matches `y = 3*x` exactly; setting the Tweakpane control to `7` and pressing Enter redraws with `y = 7*x` exactly — confirms the full precompute → grid lookup → `Plotly.react` redraw loop works on a real edit, not just at page load.
+- Zero `pageerror` events, zero unexpected console errors, across both clean-build runs.
 
-This step has no automated assertion — it's a manual sanity check before writing the automated version in Task 8. If anything looks wrong here, fix it before moving on; Task 8 will otherwise just automate a broken experience.
+This also confirmed the two things flagged as unverified at the end of Task 6: `draw()`'s `(x, y)`-destructuring assumption (confirmed correct) and Tweakpane v4's real API shape (confirmed correct **once loaded as an ES module** — see fix 4 above).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
-git add content/index.md
-git commit -m "feat: add full pymd MVP demo page"
+git add content/index.md src/pymd/directives.py src/pymd/transform.py src/pymd/render.py tests/test_transform.py
+git commit -m "feat: add full pymd MVP demo page; fix real end-to-end integration bugs"
 ```
+
+- [x] **Step 5 (added during review): regression test for the `block`-wrapping bug**
+
+Review of this task found a real gap: no unit test exercised the `block`-wrapped AST shape whose absence caused bug #2's silent no-op. Added `test_transform_document_finds_plot_node_wrapped_in_block_node` (nests `pymd-*` nodes one level inside a `{"type": "block"}` node, asserts the nested `pymd-plot` is still found and replaced with an `iframe` node containing the correct computed values). Confirmed by temporarily reverting the recursive walk to shallow scanning and observing this specific test fail (`'pymd-plot' != 'iframe'`) while the flat-AST tests kept passing — direct evidence this test catches the regression it's meant to catch.
+
+```bash
+git add tests/test_transform.py
+git commit -m "test: add regression test for block-wrapped AST node discovery"
+```
+
+**Known accepted gaps from this task (not blocking, noted in final review):**
+- The inner HTML string (before base64-encoding into the iframe) still embeds `json.dumps(...)` directly inside a literal `<script>` block — the outer document's escaping is safe (base64), but if a `calc-python` function ever returned a string containing the literal substring `</script>`, the *inner* document would be malformed once decoded. Not reachable with the MVP's numeric-only grid values.
+- No code comment states that the iframe/`data:`-URI approach is a deliberate route around mystmd's own html-node XSS boundary (the reasoning is in `render.py`'s docstring, which substantially covers it, but doesn't explicitly name the trust-model justification).
+- `render.py`'s iframe node mixes a top-level `width` attribute with a separate `style` dict for `height`/`border` — cosmetic inconsistency.
 
 ---
 
-### Task 8: Playwright browser test
+### Task 8: Playwright browser test — ✅ complete (commit 4dfab4b..caea697)
 
 **Files:**
 - Create: `tests/test_e2e_browser.py`
+- Modify: `myst.yml` (favicon config)
+- Create: `favicon.ico`
 
 **Interfaces:**
-- Consumes: the built output of `content/index.md` from Task 7 (via `uv run myst build`, invoked as a subprocess fixture in this test)
+- Consumes: the built output of `content/index.md` from Task 7 (via `uv run myst build --html`, invoked as a subprocess fixture in this test)
 - Produces: nothing consumed by later tasks — this is the final verification layer
 
-- [ ] **Step 1: Install Playwright's browser binaries**
+**This test targets the DOM shape Task 7 already discovered and confirmed working** — iframe-embedded plot, Tweakpane v4's `.tp-rotv input[type='text']` control (not a native `input[type='range']`) — so this task is confirmatory, not exploratory, for that part. It did surface 3 further real build/deployment details:
+
+1. `myst build` alone emits a JS-app SPA bundle under `_build/site`, not a static `_build/html/index.html` — needs the `--html` flag.
+2. That static export uses root-relative asset paths that only resolve when served over real HTTP, not `file://` — the test fixture serves `_build/html` via a local background `http.server` on an ephemeral port rather than navigating to a `file://` URI.
+3. `myst build --html`'s crawler tries to fetch a default favicon from mystmd.org over the network and fails the whole build if that's unreachable/unconfigured — fixed by adding a local `favicon.ico` and configuring it in `myst.yml`.
+
+- [x] **Step 1: Install Playwright's browser binaries**
 
 Run: `uv run playwright install chromium`
-Expected: downloads and installs a Chromium binary with no errors.
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the test**
 
 Create `tests/test_e2e_browser.py`:
 
 ```python
+import http.server
+import socket
 import subprocess
-import sys
+import threading
 from pathlib import Path
 
 import pytest
@@ -1120,66 +1209,96 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 @pytest.fixture(scope="module")
 def built_site():
-    subprocess.run(
-        ["uv", "run", "myst", "build"], cwd=REPO_ROOT, check=True
-    )
-    return REPO_ROOT / "_build" / "html" / "index.html"
+    subprocess.run(["uv", "run", "myst", "build", "--html"], cwd=REPO_ROOT, check=True)
+    html_dir = REPO_ROOT / "_build" / "html"
+
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, directory=str(html_dir), **kwargs)
+
+        def log_message(self, *args):
+            pass
+
+    httpd = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+    port = httpd.server_address[1]
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+
+    yield f"http://127.0.0.1:{port}/index.html"
+
+    httpd.shutdown()
+    thread.join()
 
 
 def test_slider_updates_plot_with_no_console_errors(built_site, page):
     console_errors = []
-    page.on("console", lambda msg: console_errors.append(msg.text) if msg.type == "error" else None)
-
-    page.goto(built_site.as_uri())
-
-    plot_locator = page.locator(".js-plotly-plot").first
-    plot_locator.wait_for(state="visible")
-
-    before = page.evaluate(
-        "() => document.querySelector('.js-plotly-plot').data[0].y.slice(0, 3)"
+    page_errors = []
+    page.on(
+        "console",
+        lambda msg: console_errors.append(msg.text) if msg.type == "error" else None,
     )
+    page.on("pageerror", lambda exc: page_errors.append(str(exc)))
 
-    slider_input = page.locator("input[type='range']").first
-    slider_input.fill("8")
-    slider_input.dispatch_event("change")
+    page.goto(built_site)
+
+    plot_frame = page.frame_locator("iframe")
+    plot_div = plot_frame.locator(".js-plotly-plot")
+    plot_div.wait_for(state="visible")
+
+    before = plot_div.evaluate("el => el.data[0].y.slice(0, 3)")
+
+    slider_input = plot_frame.locator(".tp-rotv input[type='text']").first
+    slider_input.fill("7")
+    slider_input.press("Enter")
 
     page.wait_for_timeout(300)
 
-    after = page.evaluate(
-        "() => document.querySelector('.js-plotly-plot').data[0].y.slice(0, 3)"
-    )
+    after = plot_div.evaluate("el => el.data[0].y.slice(0, 3)")
 
     assert before != after
     assert console_errors == []
+    assert page_errors == []
 ```
 
-- [ ] **Step 3: Run test to verify it fails (or reveals a real bug)**
+(Exact fixture shape as shipped — see the real file for anything this summary simplifies.)
 
-Run: `uv run pytest tests/test_e2e_browser.py -v`
-Expected: either PASS immediately (if Tasks 1–7 are solid), or a specific failure pointing at a real integration bug — e.g. Tweakpane's control might not literally render as `input[type='range']` (some Tweakpane bindings render a custom slider element, not a native `<input type="range">`). If the locator doesn't find the expected element, inspect the built HTML/DOM directly (`page.content()` or a non-headless run via `PWDEBUG=1`) and adjust the locator to match Tweakpane's actual rendered markup.
+- [x] **Step 3: Run the test**
 
-- [ ] **Step 4: Fix any real issues found, until the test passes**
+Run: `uv run pytest tests/test_e2e_browser.py -v` → PASS
 
-Iterate on `runtime.js` / `render.py` / the test's locators as needed based on what Step 3 reveals. This step intentionally has no fixed code — what needs fixing depends on what Step 3 finds.
-
-- [ ] **Step 5: Run the full test suite one more time**
+- [x] **Step 4: Run the full test suite**
 
 Run: `uv run pytest -v`
-Expected: all tests across `tests/test_precompute.py`, `tests/test_directives.py`, `tests/test_transform.py`, and `tests/test_e2e_browser.py` PASS.
+Result: 18 passed (4 directives, 9 precompute, 5 transform including 2 regression tests, 1 e2e browser).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
-git add tests/test_e2e_browser.py
+git add tests/test_e2e_browser.py myst.yml favicon.ico
 git commit -m "test: add Playwright browser test proving slider->plot flow works end to end"
 ```
 
+**Known accepted gap:** the HTTP server fixture calls `httpd.shutdown()` but never `httpd.server_close()` — the listening socket isn't deterministically released (negligible impact: only e2e module, ephemeral port).
+
 ---
+
+## Final Whole-Branch Review — Fix Round
+
+A final review across the whole branch (base `5dd497e`..head `caea697`) found the architecture, cross-platform spawn handling, and the iframe/XSS-boundary workaround sound, and confirmed the demo works end-to-end in a real browser. It found three items; a first pass at documenting this section (superseded) claimed all three were already "fixed in a follow-up commit" before that commit actually existed — corrected below to what was actually verified.
+
+**Important, fixed in commit `bugfix-key-stringification` (see this document's own history for the exact hash):**
+1. The float/JS key-stringification mismatch documented in Task 3/Task 6 above (Python `str()` renders whole-number floats as `"1.0"`; JS `String()` renders the same value as `"1"`) — reproduced directly (`compute_grid(f, {"a": (0, 1, 0.5)})` returned keys `"0.0"`/`"0.5"`/`"1.0"`, not `"0"`/`"0.5"`/`"1"`), confirmed to affect **every** whole-number grid point reachable via any non-integer `:step:`, not just an edge case. Fixed with `precompute._stringify` (whole-number floats render via `str(int(v))`), a regression test (`test_compute_grid_keys_match_js_number_stringification_for_whole_number_floats`) confirmed to fail against the pre-fix code, and a code comment on `runtime.js`'s `currentKey()` explaining why the JS side needs no matching change (JS numbers have no int/float distinction already).
+2. Added `tests/test_plugin.py::test_directive_dispatch_writes_json_array_not_bare_object`, a regression test for the `--directive` JSON-array requirement (Task 4) that drives `plugin.main` directly through stdin/stdout redirection. Confirmed to fail (`assert isinstance(parsed, list)` → `False`) when the array-wrapping in `plugin.py`'s `--directive` branch is reverted to a bare object, then confirmed to pass again once restored.
+3. `PLOT_DIRECTIVE` already carried a comment documenting that mystmd silently drops any undeclared option — this item required no further work, it was already correctly done at the time this review ran.
+
+**Process finding, fixed by re-syncing this document:** this plan file, as tracked in the implementation branch, had fallen out of sync with the main checkout's copy during execution (an editing-path mistake by the controller, not a subagent error) — Task 2 and Task 8's sections still described their original, superseded approaches rather than what was actually built and verified, and this fix-round section itself had drifted into describing fixes as already committed before the work was actually done. This revision resyncs the whole document, backfills Task 7's actual fixes (block-node recursion, iframe/data-URI, ESM Tweakpane load) which had never been retroactively documented here at all, and corrects the fix-round claims above against what was actually run and verified.
+
+**Remaining accepted debt (Minor, not blocking):** launcher path-detection order in `scripts/link_plugin_launcher.py`; README not flagging the unverified-on-POSIX caveat; the lowercase-type-comment locality gap on `PLOT_DIRECTIVE`; the inner `</script>`-in-payload risk (unreachable with numeric-only grid values); the missing explicit trust-model comment for the iframe/XSS-boundary workaround; the iframe `width`/`style` attribute-mixing; `render.py`'s `__file__.replace(...)` idiom for loading `runtime.js`; and the test fixture's `server_close()` omission.
 
 ## Self-Review Notes
 
-**Spec coverage:** Architecture (Task 2), directive syntax (Task 4), precompute engine incl. budget guard (Task 3), client runtime incl. Tweakpane+Plotly (Task 6), testing incl. Playwright (Task 8), MVP scope (single slider/calc/scatter demo, Task 7) — all covered. The spec's "falls out automatically" claims (other Tweakpane kinds, other Plotly trace types) aren't separately tasked, since the plan's `directives.py`/`render.py` design already makes them free — `PLOT_DIRECTIVE`'s `arg` is forwarded as Plotly's own trace type string with no hardcoded list, and adding another `input-*` directive is a few lines in `directives.py` following the same pattern as `input-slider`, not a new mechanism.
+**Spec coverage:** Architecture (Task 2), directive syntax (Task 4), precompute engine incl. budget guard (Task 3), client runtime incl. Tweakpane+Plotly (Task 6), testing incl. Playwright (Task 8), MVP scope (single slider/calc/scatter demo, Task 7) — all covered. The spec's "falls out automatically" claims (other Tweakpane kinds, other Plotly trace types) aren't separately tasked, since the plan's `directives.py`/`render.py` design already makes them free in principle — `PLOT_DIRECTIVE`'s `arg` is forwarded as Plotly's own trace type string with no hardcoded list, and adding another `input-*` directive is a few lines in `directives.py` following the same pattern as `input-slider`. Note the caveat added during Task 4/final-review: any *option* (not just trace type) beyond the currently-whitelisted `data`/`mode` still needs explicit declaration in `PLOT_DIRECTIVE["options"]` or mystmd silently drops it — "falls out automatically" is true for trace *types*, not unconditionally true for every possible *option* of every trace type.
 
-**Placeholder scan:** No TBD/TODO markers. The one place flagged as "verify against the real tool" (Task 4 Step 6, Task 2 Step 3) is genuine unavoidable uncertainty about an undocumented wire format, not a deferred design decision — each such step names exactly what to run and what "success" looks like.
+**Placeholder scan:** No TBD/TODO markers. Every "verify against the real tool" step named exactly what was run and what was found, including four rounds of genuine, well-documented real-tool corrections (Task 2's spawn mechanism, Task 4's directive schema, Task 6's ordering bug, Task 7's four integration bugs).
 
-**Type consistency:** Placeholder node shape (`type`/`arg`/`options`/`body`) is identical across `directives.py` (Task 4), `transform.py` (Task 5), and the tests. `compute_grid`'s return type (`dict[str, Any]` keyed by pipe-joined stringified values) is used identically in `transform.py` and `render.py`. `render_plot`'s signature changes once (Task 5's 2-arg stub → Task 6's 3-arg real version) — Task 6 Step 4 explicitly updates the Task 5 test to match, so no stale signature is left behind.
+**Type consistency:** Placeholder node shape (`type`/`arg`/`options`/`body`) is identical across `directives.py`, `transform.py`, and the tests. `compute_grid`'s return type is used identically in `transform.py` and `render.py`. `render_plot`'s signature changes twice (Task 5's 2-arg stub → Task 6's 3-arg version → Task 7's return-shape change to a full standalone document) — each change updates the consuming test in the same task, so no stale signature is left behind at any point in the final, shipped state.
