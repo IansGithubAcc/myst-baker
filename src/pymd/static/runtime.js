@@ -12,6 +12,10 @@ function pymdInitPlot(containerId, inputSpecs, grid, traceType, traceOptions) {
   });
 
   function currentKey() {
+    // Must match precompute.py's _stringify. JS numbers have no int/float
+    // distinction, so String(1) is already "1" for any whole-number value
+    // regardless of how it arrived (typed input, slider drag, JSON default) --
+    // no special-casing needed on this side, only on the Python side.
     return inputSpecs.map((spec) => String(params[spec.name])).join('|');
   }
 

@@ -47,6 +47,17 @@ def max_grid_size():
     return int(os.environ.get(MAX_GRID_SIZE_ENV_VAR, DEFAULT_MAX_GRID_SIZE))
 
 
+def _stringify(value):
+    # Must match runtime.js's `String(v)` exactly. JS has no int/float
+    # distinction, so String(1) === "1" for a whole-number value however it
+    # arrived; Python's str() renders the same whole-number float as "1.0".
+    # Without this, any fractional :step: whose grid includes a whole-number
+    # point produces a key here that the client's lookup can never match.
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    return str(value)
+
+
 def compute_grid(func, inputs):
     matched = matched_inputs(func, inputs)
     names = [name for name, _ in matched]
@@ -59,6 +70,6 @@ def compute_grid(func, inputs):
 
     results = {}
     for combo in itertools.product(*value_lists):
-        key = "|".join(str(v) for v in combo)
+        key = "|".join(_stringify(v) for v in combo)
         results[key] = func(**dict(zip(names, combo)))
     return results
