@@ -16,6 +16,6 @@ project:
       path: .venv/pymd-plugin-bin.exe
 site:
   template: book-theme
-  # options:
-  #   favicon: favicon.ico
+  options:
+    favicon: favicon.ico
   #   logo: site_logo.png
