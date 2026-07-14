@@ -78,6 +78,62 @@ def test_transform_document_raises_when_plot_references_unknown_function():
         transform_document(_page_ast(input_node, calc_node, plot_node))
 
 
+def test_transform_document_finds_plot_node_wrapped_in_block_node():
+    # Regression test for a real end-to-end build bug: mystmd does not put
+    # top-level page content directly under the document root's `children`.
+    # Instead it wraps it in an intermediate `{"type": "block", "children":
+    # [...]}` node (verified against a real `myst build --debug`), so the
+    # actual shape is root -> block -> [pymd-* nodes], not root -> [pymd-*
+    # nodes] directly as every other test in this file constructs it. A
+    # scanner that only looks at `ast["children"]` (or otherwise fails to
+    # recurse into nested `children`) finds nothing here and silently leaves
+    # the pymd-plot node untransformed -- exactly the bug fixed in
+    # transform.py's `_iter_nodes`/`_replace_plots`. This test must fail if
+    # that recursion is ever reverted to shallow/immediate-children scanning.
+    input_node = {
+        "type": "pymd-input-slider",
+        "arg": "a",
+        "options": {"value": 1, "min": 0, "max": 2, "step": 1},
+        "body": "",
+    }
+    calc_node = {
+        "type": "pymd-calc-python",
+        "arg": None,
+        "options": {},
+        "body": "def get_plot_data(a):\n    return a * 2\n",
+    }
+    plot_node = {
+        "type": "pymd-plot",
+        "arg": "scatter",
+        "options": {"data": "get_plot_data"},
+        "body": "",
+    }
+
+    block_node = {
+        "type": "block",
+        "children": [input_node, calc_node, plot_node],
+    }
+    ast = {
+        "type": "root",
+        "children": [block_node],
+    }
+
+    result = transform_document(ast)
+
+    # The plot node nested inside the "block" wrapper must have been found
+    # and replaced with an iframe node, in place.
+    assert result["children"][0]["type"] == "block"
+    inner_children_types = [child["type"] for child in result["children"][0]["children"]]
+    assert inner_children_types == ["pymd-input-slider", "pymd-calc-python", "iframe"]
+
+    iframe_node = result["children"][0]["children"][2]
+    html = _decode_iframe_html(iframe_node)
+    assert "pymdInitPlot(" in html
+    assert '"0": 0' in html
+    assert '"1": 2' in html
+    assert '"2": 4' in html
+
+
 def test_transform_document_orders_input_specs_by_function_parameter_order():
     # The function declares parameters in the order (a, b), but the
     # input-slider blocks appear in the AST in the opposite order (b, then
