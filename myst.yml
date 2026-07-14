@@ -11,7 +11,7 @@ project:
     - file: content/index.md
   plugins:
     - type: executable
-      path: pymd_plugin.cmd
+      path: .venv/Scripts/pymd-plugin.exe
 site:
   template: book-theme
   # options:
