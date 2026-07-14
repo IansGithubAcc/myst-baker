@@ -9,7 +9,7 @@ from pymd import precompute, render
 # round-trips to `{"type": "iframe", ..., "style": {"height": "450px"}}`), so
 # we can size the iframe to comfortably fit the Tweakpane controls above the
 # Plotly chart.
-IFRAME_HEIGHT = "600px"
+IFRAME_HEIGHT = "750px"
 
 
 def inspect_params(func):
