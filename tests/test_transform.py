@@ -1,6 +1,15 @@
+import base64
 import json
 
 from pymd.transform import transform_document
+
+
+def _decode_iframe_html(iframe_node):
+    assert iframe_node["type"] == "iframe"
+    prefix = "data:text/html;base64,"
+    assert iframe_node["src"].startswith(prefix)
+    encoded = iframe_node["src"][len(prefix) :]
+    return base64.b64decode(encoded).decode("utf-8")
 
 
 def _page_ast(input_node, calc_node, plot_node):
@@ -33,13 +42,14 @@ def test_transform_document_replaces_plot_node_with_html():
     result = transform_document(_page_ast(input_node, calc_node, plot_node))
 
     children_types = [child["type"] for child in result["children"]]
-    assert children_types == ["pymd-input-slider", "pymd-calc-python", "html"]
+    assert children_types == ["pymd-input-slider", "pymd-calc-python", "iframe"]
 
-    html_node = result["children"][2]
-    assert "pymdInitPlot(" in html_node["value"]
-    assert '"0": 0' in html_node["value"]
-    assert '"1": 2' in html_node["value"]
-    assert '"2": 4' in html_node["value"]
+    iframe_node = result["children"][2]
+    html = _decode_iframe_html(iframe_node)
+    assert "pymdInitPlot(" in html
+    assert '"0": 0' in html
+    assert '"1": 2' in html
+    assert '"2": 4' in html
 
 
 def test_transform_document_raises_when_plot_references_unknown_function():
@@ -108,7 +118,7 @@ def test_transform_document_orders_input_specs_by_function_parameter_order():
 
     result = transform_document(ast)
 
-    html = result["children"][-1]["value"]
+    html = _decode_iframe_html(result["children"][-1])
 
     # runtime.js (embedded above) *defines* pymdInitPlot, so find the last
     # occurrence -- the actual invocation with the real arguments.

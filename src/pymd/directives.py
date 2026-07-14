@@ -34,6 +34,13 @@ PLOT_DIRECTIVE = {
     "arg": {"type": "string", "doc": "Plotly trace type"},
     "options": {
         "data": {"type": "string", "doc": "Name of the calc function providing this plot's data"},
+        # CORRECTED (verified against real `myst build --debug`): mystmd's directive-option
+        # validation (directive-options-correct) silently strips any option not declared here
+        # (only a warning, no error, no data) before the placeholder node is ever built --
+        # the plot directive's `:mode:` option was being dropped this way, so trace_options
+        # in transform.py/render.py never actually received it. Declared explicitly so it
+        # survives into the mdast node's `options` dict.
+        "mode": {"type": "string", "doc": "Plotly trace mode (e.g. lines, markers, lines+markers)"},
     },
 }
 
