@@ -3,15 +3,6 @@ import inspect
 
 from pymd import precompute, render
 
-# Height of the iframe embedding each plot. mystmd's reconstructed "iframe"
-# mdast node honors an inline `style` dict (verified against a real `myst
-# build`: typing `<iframe ... style="height:450px">` directly in markdown
-# round-trips to `{"type": "iframe", ..., "style": {"height": "450px"}}`), so
-# we can size the iframe to comfortably fit the Tweakpane controls above the
-# Plotly chart.
-IFRAME_HEIGHT = "750px"
-
-
 def inspect_params(func):
     return list(inspect.signature(func).parameters)
 
@@ -94,13 +85,25 @@ def _iframe_node(html):
     `data:text/html;base64,...` iframe's `body.innerText` reflects content
     that only exists after script execution). So the plot's rendered HTML is
     now embedded this way instead.
+
+    CORRECTED (found by reading the book-theme's bundled iframe renderer,
+    `chunk-RUUCG5OS.js`): that renderer ignores any `style` we put on the
+    iframe mdast node entirely -- it hardcodes the iframe's own style
+    (`width/height:100%; position:absolute`) and wraps it in a `div` sized by
+    `padding-bottom:60%` of the div's *width* (a fixed 5:3 aspect-ratio box),
+    capped at the page's content width. So there is no way to request a
+    taller box through this node; only `width` (parsed by the renderer's
+    `WE()`) affects sizing, and it's already maxed at "100%". The content
+    rendered inside the iframe must instead fit whatever height that
+    aspect-ratio box works out to -- see the flex layout in render.py/
+    runtime.js, which makes the Plotly chart resize to fill it exactly
+    instead of assuming a fixed pixel height.
     """
     data_uri = "data:text/html;base64," + base64.b64encode(html.encode("utf-8")).decode("ascii")
     return {
         "type": "iframe",
         "src": data_uri,
         "width": "100%",
-        "style": {"height": IFRAME_HEIGHT, "border": "none"},
     }
 
 

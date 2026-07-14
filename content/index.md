@@ -29,3 +29,4 @@ def get_plot_data(a, b):
 :data: get_plot_data
 :mode: lines
 ```
+Ain't it beautiful?

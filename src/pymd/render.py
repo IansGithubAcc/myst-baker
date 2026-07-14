@@ -45,11 +45,20 @@ def render_plot(plot_node, grid_result, input_specs):
     # `!function(t,e){"object"==typeof exports...}`, attaching `window.Plotly`
     # synchronously), so it's safe to keep as a plain classic `<script src>`
     # loaded before the module script.
+    # The book-theme's iframe renderer forces this document's own iframe
+    # element to a fixed height (a padding-bottom aspect-ratio box on the
+    # embedding side; see transform.py's `_iframe_node` docstring), so there
+    # is no fixed pixel height to aim for here. Instead the container fills
+    # the iframe's viewport (100vh, which inside an iframe refers to the
+    # iframe's own height) with a column flexbox: the Tweakpane controls take
+    # their natural height and the Plotly div gets whatever is left, so
+    # runtime.js can resize the chart to fit exactly instead of overflowing
+    # into a scrollbar.
     return f"""<!doctype html>
 <html>
 <head><meta charset="utf-8"></head>
 <body style="margin:0">
-<div id="{container_id}"></div>
+<div id="{container_id}" style="display:flex;flex-direction:column;height:100vh;box-sizing:border-box"></div>
 <script src="{CDN_PLOTLY}"></script>
 <script type="module">
 import {{ Pane }} from "{CDN_TWEAKPANE}";
