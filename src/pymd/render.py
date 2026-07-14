@@ -56,7 +56,54 @@ def render_plot(plot_node, grid_result, input_specs):
     # into a scrollbar.
     return f"""<!doctype html>
 <html>
-<head><meta charset="utf-8"></head>
+<head><meta charset="utf-8">
+<style>
+/* Tweakpane's default theme is dark; retheme it to match mystmd's book-theme
+   (verified against a real build: white page background, warm-gray/stone
+   heading text #1c1917, gray-200 #e5e7eb borders, gray-600 #4b5563 secondary
+   text, sans-serif UI font -- see kbd/border/heading computed styles) rather
+   than clashing with it. Tweakpane v4 themes entirely through --tp-* custom
+   properties (no JS theme option), so overriding them on :root reaches both
+   the controls panel and any popup elements it appends straight to <body>.
+   The default --tp-container-unit-size (20px) also reads visually small next
+   to the page's normal text size, so it's bumped up along with the padding/
+   spacing/value-width variables that scale alongside it, plus the .tp-rotv
+   font-size, which Tweakpane hardcodes to 11px rather than exposing as a
+   variable. */
+:root {{
+  --tp-base-background-color: #ffffff;
+  --tp-base-shadow-color: rgba(0, 0, 0, 0.1);
+  --tp-base-font-family: ui-sans-serif, system-ui, sans-serif;
+  --tp-button-background-color: #f3f4f6;
+  --tp-button-background-color-hover: #e5e7eb;
+  --tp-button-background-color-focus: #e5e7eb;
+  --tp-button-background-color-active: #d1d5db;
+  --tp-button-foreground-color: #374151;
+  --tp-container-background-color: #f9fafb;
+  --tp-container-background-color-hover: #f3f4f6;
+  --tp-container-background-color-focus: #f3f4f6;
+  --tp-container-background-color-active: #e5e7eb;
+  --tp-container-foreground-color: #374151;
+  --tp-container-horizontal-padding: 8px;
+  --tp-container-vertical-padding: 6px;
+  --tp-container-unit-spacing: 6px;
+  --tp-container-unit-size: 28px;
+  --tp-groove-foreground-color: #e5e7eb;
+  --tp-input-background-color: #f3f4f6;
+  --tp-input-background-color-hover: #e5e7eb;
+  --tp-input-background-color-focus: #e5e7eb;
+  --tp-input-background-color-active: #d1d5db;
+  --tp-input-foreground-color: #1c1917;
+  --tp-label-foreground-color: #4b5563;
+  --tp-monitor-background-color: #f3f4f6;
+  --tp-monitor-foreground-color: #374151;
+  --tp-blade-value-width: 200px;
+}}
+.tp-rotv {{
+  font-size: 13px;
+}}
+</style>
+</head>
 <body style="margin:0">
 <div id="{container_id}" style="display:flex;flex-direction:column;height:100vh;box-sizing:border-box"></div>
 <script src="{CDN_PLOTLY}"></script>
