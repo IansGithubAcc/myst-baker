@@ -1,6 +1,7 @@
 import json
 import sys
 
+from pymd import transform
 from pymd.directives import (
     INPUT_SLIDER_DIRECTIVE,
     CALC_PYTHON_DIRECTIVE,
@@ -32,7 +33,7 @@ def main(argv=None):
 
     if argv[0] == "--transform":
         ast = _read_ast_from_stdin()
-        # no-op for now: proves the plumbing works before any real logic
+        ast = transform.transform_document(ast)
         _write_ast_to_stdout(ast)
         return
 
