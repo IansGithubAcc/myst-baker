@@ -1,20 +1,31 @@
 # pymd MVP demo
 
+$ y = a * x^2 + b$
+
 ```{input-slider} a
-:value: 3
-:min: 0
-:max: 10
+:value: 0
+:min: -6
+:max: 6
+:step: 1
+```
+
+```{input-slider} b
+:value: 0
+:min: -3
+:max: 3
 :step: 1
 ```
 
 ```{calc-python}
-def get_plot_data(a):
-    x = list(range(10))
-    y = [a * xi for xi in x]
+import math
+
+def get_plot_data(a, b):
+    x = list(range(-10, 10))
+    y = [math.cos(a * xi/10) + b for xi in x]
     return x, y
 ```
 
-```{plot} scatter
+```{plot} bar
 :data: get_plot_data
 :mode: lines
 ```
