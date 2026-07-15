@@ -38,6 +38,16 @@ def built_site():
     thread.join()
 
 
+@pytest.fixture(scope="module")
+def inputs_page_url(built_site):
+    return built_site.replace("/index.html", "/inputs/index.html")
+
+
+@pytest.fixture(scope="module")
+def outputs_page_url(built_site):
+    return built_site.replace("/index.html", "/outputs/index.html")
+
+
 def test_slider_updates_plot_with_no_console_errors(built_site, page):
     console_errors = []
     page.on("console", lambda msg: console_errors.append(msg.text) if msg.type == "error" else None)
@@ -81,3 +91,66 @@ def test_slider_updates_plot_with_no_console_errors(built_site, page):
     body = plot_frame.locator("body")
     overflow = body.evaluate("el => el.scrollHeight - el.clientHeight")
     assert overflow <= 1
+
+
+def test_dropdown_updates_plot_with_no_console_errors(inputs_page_url, page):
+    console_errors = []
+    page.on("console", lambda msg: console_errors.append(msg.text) if msg.type == "error" else None)
+    page_errors = []
+    page.on("pageerror", lambda exc: page_errors.append(str(exc)))
+
+    page.goto(inputs_page_url)
+
+    # content/inputs.md's live iframes, in document order: One slider (0),
+    # Two sliders (1), Three sliders (2), Fine steps (3), Checkbox (4),
+    # Dropdown (5) -- the dropdown example is the 6th plot on the page.
+    # Confirmed empirically: page.locator("iframe").count() == 6 on the
+    # built page.
+    plot_frame = page.frame_locator("iframe").nth(5)
+    plot_locator = plot_frame.locator(".js-plotly-plot").first
+    plot_locator.wait_for(state="visible")
+
+    before = plot_locator.evaluate("el => el.data[0].y.slice(0, 3)")
+
+    # Tweakpane v4's list/dropdown binding renders as a `<select class="tp-lstv_s">`
+    # inside a `.tp-lstv` wrapper, itself nested inside the pane's `.tp-rotv`
+    # root container (the same root the number binding's
+    # `.tp-rotv input[type='text']` lives under) -- discovered by inspecting
+    # `frame.locator(".tp-rotv").first.inner_html()` against a real build, per
+    # this project's convention of verifying Tweakpane's DOM empirically
+    # rather than assuming from docs. The brief's draft selector
+    # (`.tp-rotv select`) would have matched too since `.tp-lstv` nests inside
+    # `.tp-rotv`, but `.tp-lstv select` names the actual binding wrapper.
+    dropdown_select = plot_frame.locator(".tp-lstv select").first
+    dropdown_select.select_option("square")
+
+    page.wait_for_timeout(300)
+
+    after = plot_locator.evaluate("el => el.data[0].y.slice(0, 3)")
+
+    assert before != after
+    assert console_errors == []
+    assert page_errors == []
+
+
+def test_new_output_types_render_with_no_console_errors(outputs_page_url, page):
+    console_errors = []
+    page.on("console", lambda msg: console_errors.append(msg.text) if msg.type == "error" else None)
+    page_errors = []
+    page.on("pageerror", lambda exc: page_errors.append(str(exc)))
+
+    page.goto(outputs_page_url)
+
+    # content/outputs.md's live plots, in document order: 3 scatter-mode
+    # plots, 1 bar, 1 histogram, 1 pie, 1 box, 1 violin = 8 total. Confirmed
+    # empirically against the built page (including each trace's `.type`)
+    # rather than assumed from document structure alone.
+    iframe_count = page.locator("iframe").count()
+    assert iframe_count == 8
+
+    for i in range(iframe_count):
+        frame = page.frame_locator("iframe").nth(i)
+        frame.locator(".js-plotly-plot").first.wait_for(state="visible")
+
+    assert console_errors == []
+    assert page_errors == []
