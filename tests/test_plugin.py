@@ -44,6 +44,5 @@ def test_plugin_spec_lists_all_directives(monkeypatch):
         "input-slider",
         "input-checkbox",
         "input-dropdown",
-        "calc-python",
         "plot",
     }

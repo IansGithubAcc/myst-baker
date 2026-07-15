@@ -1,4 +1,4 @@
-KNOWN_DIRECTIVES = {"input-slider", "input-checkbox", "input-dropdown", "calc-python", "plot"}
+KNOWN_DIRECTIVES = {"input-slider", "input-checkbox", "input-dropdown", "plot"}
 
 # CORRECTED (verified against real `myst build --debug`): mystmd's directive-option
 # type-check (myst-parser's contentFromNode, see ParseTypesEnum) only recognizes the
@@ -45,12 +45,6 @@ INPUT_DROPDOWN_DIRECTIVE = {
         },
     },
     "body": {"type": "string", "doc": "Choices, one per line"},
-}
-
-CALC_PYTHON_DIRECTIVE = {
-    "name": "calc-python",
-    "doc": "A raw Python function definition, executed once per grid combination.",
-    "body": {"type": "string", "doc": "Python source defining one function"},
 }
 
 PLOT_DIRECTIVE = {
