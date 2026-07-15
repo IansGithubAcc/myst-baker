@@ -1,6 +1,8 @@
 import base64
 import json
 
+import pytest
+
 from pymd.transform import transform_document
 
 
@@ -19,6 +21,10 @@ def _page_ast(input_node, calc_node, plot_node):
     }
 
 
+def _calc_node(source):
+    return {"type": "code", "lang": "python{calc}", "value": source}
+
+
 def test_transform_document_replaces_plot_node_with_html():
     input_node = {
         "type": "pymd-input-slider",
@@ -26,12 +32,7 @@ def test_transform_document_replaces_plot_node_with_html():
         "options": {"value": 1, "min": 0, "max": 2, "step": 1},
         "body": "",
     }
-    calc_node = {
-        "type": "pymd-calc-python",
-        "arg": None,
-        "options": {},
-        "body": "def get_plot_data(a):\n    return a, a * 2\n",
-    }
+    calc_node = _calc_node("def get_plot_data(a):\n    return a, a * 2\n")
     plot_node = {
         "type": "pymd-plot",
         "arg": "scatter",
@@ -42,7 +43,7 @@ def test_transform_document_replaces_plot_node_with_html():
     result = transform_document(_page_ast(input_node, calc_node, plot_node))
 
     children_types = [child["type"] for child in result["children"]]
-    assert children_types == ["pymd-input-slider", "pymd-calc-python", "iframe"]
+    assert children_types == ["pymd-input-slider", "code", "iframe"]
 
     iframe_node = result["children"][2]
     html = _decode_iframe_html(iframe_node)
@@ -59,20 +60,13 @@ def test_transform_document_raises_when_plot_references_unknown_function():
         "options": {"value": 1, "min": 0, "max": 1, "step": 1},
         "body": "",
     }
-    calc_node = {
-        "type": "pymd-calc-python",
-        "arg": None,
-        "options": {},
-        "body": "def get_plot_data(a):\n    return a\n",
-    }
+    calc_node = _calc_node("def get_plot_data(a):\n    return a\n")
     plot_node = {
         "type": "pymd-plot",
         "arg": "scatter",
         "options": {"data": "does_not_exist"},
         "body": "",
     }
-
-    import pytest
 
     with pytest.raises(NameError, match="does_not_exist"):
         transform_document(_page_ast(input_node, calc_node, plot_node))
@@ -96,12 +90,7 @@ def test_transform_document_finds_plot_node_wrapped_in_block_node():
         "options": {"value": 1, "min": 0, "max": 2, "step": 1},
         "body": "",
     }
-    calc_node = {
-        "type": "pymd-calc-python",
-        "arg": None,
-        "options": {},
-        "body": "def get_plot_data(a):\n    return a, a * 2\n",
-    }
+    calc_node = _calc_node("def get_plot_data(a):\n    return a, a * 2\n")
     plot_node = {
         "type": "pymd-plot",
         "arg": "scatter",
@@ -124,7 +113,7 @@ def test_transform_document_finds_plot_node_wrapped_in_block_node():
     # and replaced with an iframe node, in place.
     assert result["children"][0]["type"] == "block"
     inner_children_types = [child["type"] for child in result["children"][0]["children"]]
-    assert inner_children_types == ["pymd-input-slider", "pymd-calc-python", "iframe"]
+    assert inner_children_types == ["pymd-input-slider", "code", "iframe"]
 
     iframe_node = result["children"][0]["children"][2]
     html = _decode_iframe_html(iframe_node)
@@ -154,12 +143,7 @@ def test_transform_document_orders_input_specs_by_function_parameter_order():
         "options": {"value": 1, "min": 0, "max": 1, "step": 1},
         "body": "",
     }
-    calc_node = {
-        "type": "pymd-calc-python",
-        "arg": None,
-        "options": {},
-        "body": "def f(a, b):\n    return a, b\n",
-    }
+    calc_node = _calc_node("def f(a, b):\n    return a, b\n")
     plot_node = {
         "type": "pymd-plot",
         "arg": "scatter",
@@ -192,12 +176,7 @@ def test_transform_document_supports_checkbox_input():
         "options": {"value": True},
         "body": "",
     }
-    calc_node = {
-        "type": "pymd-calc-python",
-        "arg": None,
-        "options": {},
-        "body": "def get_plot_data(enabled):\n    return enabled, int(enabled) * 2\n",
-    }
+    calc_node = _calc_node("def get_plot_data(enabled):\n    return enabled, int(enabled) * 2\n")
     plot_node = {
         "type": "pymd-plot",
         "arg": "scatter",
@@ -220,12 +199,7 @@ def test_transform_document_supports_dropdown_input():
         "options": {},
         "body": "red\ngreen\nblue",
     }
-    calc_node = {
-        "type": "pymd-calc-python",
-        "arg": None,
-        "options": {},
-        "body": "def get_plot_data(color):\n    return color, len(color)\n",
-    }
+    calc_node = _calc_node("def get_plot_data(color):\n    return color, len(color)\n")
     plot_node = {
         "type": "pymd-plot",
         "arg": "scatter",
@@ -240,3 +214,57 @@ def test_transform_document_supports_dropdown_input():
     assert '"red": {"x": "red", "y": 3}' in html
     assert '"green": {"x": "green", "y": 5}' in html
     assert '"blue": {"x": "blue", "y": 4}' in html
+
+
+def test_transform_document_raises_for_non_python_calc_language():
+    input_node = {
+        "type": "pymd-input-slider",
+        "arg": "a",
+        "options": {"value": 1, "min": 0, "max": 1, "step": 1},
+        "body": "",
+    }
+    calc_node = {"type": "code", "lang": "r{calc}", "value": "f <- function(a) a\n"}
+    plot_node = {
+        "type": "pymd-plot",
+        "arg": "scatter",
+        "options": {"data": "f"},
+        "body": "",
+    }
+
+    with pytest.raises(ValueError, match="declares language 'r'"):
+        transform_document(_page_ast(input_node, calc_node, plot_node))
+
+
+def test_transform_document_ignores_plain_python_code_fence():
+    # A fence that merely happens to be lang="python" (no `{calc}` suffix,
+    # e.g. an ordinary prose/example snippet) is not a live calc block --
+    # it must not be exec'd or otherwise treated as a calc source. The
+    # body below would raise if it were ever exec'd, so this test fails
+    # loudly if that ever regresses.
+    input_node = {
+        "type": "pymd-input-slider",
+        "arg": "a",
+        "options": {"value": 1, "min": 0, "max": 1, "step": 1},
+        "body": "",
+    }
+    plain_code_node = {
+        "type": "code",
+        "lang": "python",
+        "value": "raise RuntimeError('should never run')\n",
+    }
+    calc_node = _calc_node("def f(a):\n    return a, a\n")
+    plot_node = {
+        "type": "pymd-plot",
+        "arg": "scatter",
+        "options": {"data": "f"},
+        "body": "",
+    }
+
+    ast = {
+        "type": "root",
+        "children": [input_node, plain_code_node, calc_node, plot_node],
+    }
+
+    result = transform_document(ast)
+
+    assert result["children"][-1]["type"] == "iframe"

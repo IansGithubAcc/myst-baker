@@ -1,5 +1,6 @@
 import base64
 import inspect
+import re
 
 from pymd import precompute, render
 
@@ -78,6 +79,25 @@ _INPUT_CLIENT_SPECS = {
 }
 
 
+_CALC_FENCE_RE = re.compile(r"^(?P<lang>\w+)\{calc\}$")
+
+
+def _calc_fence_lang(node):
+    """Return the declared language of a `<lang>{calc}` code fence, or
+    `None` if this code node isn't a calc fence at all.
+
+    mdast splits a fence's info string on the first whitespace: `lang`
+    gets everything before it, `meta` everything after. With no space in
+    `python{calc}`, the whole string lands in `lang` and `meta` is empty;
+    with a space (`python {calc}`), `lang` is `python` and `meta` is
+    `{calc}`. Concatenating them back reconstructs the original info
+    string either way.
+    """
+    info = (node.get("lang") or "") + (node.get("meta") or "")
+    match = _CALC_FENCE_RE.match(info)
+    return match.group("lang") if match else None
+
+
 def _collect_nodes(ast):
     inputs = {}
     input_nodes = {}
@@ -89,8 +109,15 @@ def _collect_nodes(ast):
             name = node["arg"]
             inputs[name] = _INPUT_PRECOMPUTE_SPECS[node_type](node)
             input_nodes[name] = node
-        elif node_type == "pymd-calc-python":
-            exec(node["body"], calc_namespace)
+        elif node_type == "code":
+            calc_lang = _calc_fence_lang(node)
+            if calc_lang is not None:
+                if calc_lang != "python":
+                    raise ValueError(
+                        f"calc block declares language {calc_lang!r}, but "
+                        f"only 'python' calc blocks are supported"
+                    )
+                exec(node["value"], calc_namespace)
 
     return inputs, input_nodes, calc_namespace
 
