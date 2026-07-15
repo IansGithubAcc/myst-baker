@@ -8,9 +8,12 @@ Precomputed interactive docs via a MyST executable plugin.
 uv sync
 ```
 
-`uv sync` installs the `pymd-plugin` console_scripts entry point at `.venv/Scripts/pymd-plugin.exe`,
-which `myst.yml` references directly. MyST's executable-plugin loader resolves that path
-literally (no PATH search), so this project currently targets Windows only.
+`uv sync` installs the `pymd-plugin` console_scripts entry point, and `myst.yml` references
+that file directly — MyST's executable-plugin loader resolves the configured path literally
+(no PATH search), so the path must match where `uv sync` puts it on your platform:
+
+- Windows: `.venv/Scripts/pymd-plugin.exe` (the default in `myst.yml`)
+- Linux/Mac: `.venv/bin/pymd-plugin` — update the `path` in `myst.yml`'s `plugins` entry to this
 
 Then build the docs with:
 

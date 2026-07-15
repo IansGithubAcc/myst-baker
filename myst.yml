@@ -19,6 +19,7 @@ project:
     - type: executable
       # Generated directly by `uv sync` (see README.md "Setup"). MyST resolves this as a
       # literal path, not a PATH search, so it must match where uv puts the launcher.
+      # Windows path shown below; on Linux/Mac use .venv/bin/pymd-plugin instead.
       path: .venv/Scripts/pymd-plugin.exe
 site:
   template: book-theme
