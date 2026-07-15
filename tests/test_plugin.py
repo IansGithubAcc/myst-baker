@@ -32,3 +32,18 @@ def test_directive_dispatch_writes_json_array_not_bare_object(monkeypatch):
             "body": "",
         }
     ]
+
+
+def test_plugin_spec_lists_all_directives(monkeypatch):
+    out = io.StringIO()
+    monkeypatch.setattr("sys.stdout", out)
+    plugin.main([])
+    spec = json.loads(out.getvalue())
+    directive_names = {d["name"] for d in spec["directives"]}
+    assert directive_names == {
+        "input-slider",
+        "input-checkbox",
+        "input-dropdown",
+        "calc-python",
+        "plot",
+    }

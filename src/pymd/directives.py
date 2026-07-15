@@ -1,4 +1,4 @@
-KNOWN_DIRECTIVES = {"input-slider", "calc-python", "plot"}
+KNOWN_DIRECTIVES = {"input-slider", "input-checkbox", "input-dropdown", "calc-python", "plot"}
 
 # CORRECTED (verified against real `myst build --debug`): mystmd's directive-option
 # type-check (myst-parser's contentFromNode, see ParseTypesEnum) only recognizes the
@@ -20,6 +20,31 @@ INPUT_SLIDER_DIRECTIVE = {
         "max": {"type": "number", "doc": "Maximum value"},
         "step": {"type": "number", "doc": "Step size"},
     },
+}
+
+INPUT_CHECKBOX_DIRECTIVE = {
+    "name": "input-checkbox",
+    "doc": "A boolean checkbox input, bound to a name referenced by calc function parameters.",
+    "arg": {"type": "string", "doc": "The input's name"},
+    "options": {
+        "value": {"type": "boolean", "doc": "Initial state"},
+    },
+}
+
+INPUT_DROPDOWN_DIRECTIVE = {
+    "name": "input-dropdown",
+    "doc": (
+        "A dropdown input selecting among a fixed list of choices (one per "
+        "body line), bound to a name referenced by calc function parameters."
+    ),
+    "arg": {"type": "string", "doc": "The input's name"},
+    "options": {
+        "value": {
+            "type": "string",
+            "doc": "Initial selection (defaults to the first choice if omitted)",
+        },
+    },
+    "body": {"type": "string", "doc": "Choices, one per line"},
 }
 
 CALC_PYTHON_DIRECTIVE = {

@@ -36,6 +36,33 @@ def test_build_placeholder_node_plot():
     }
 
 
+def test_build_placeholder_node_input_checkbox():
+    node = build_placeholder_node(
+        "input-checkbox", arg="enabled", options={"value": True}, body=""
+    )
+    assert node == {
+        "type": "pymd-input-checkbox",
+        "arg": "enabled",
+        "options": {"value": True},
+        "body": "",
+    }
+
+
+def test_build_placeholder_node_input_dropdown():
+    node = build_placeholder_node(
+        "input-dropdown",
+        arg="color",
+        options={"value": "green"},
+        body="red\ngreen\nblue",
+    )
+    assert node == {
+        "type": "pymd-input-dropdown",
+        "arg": "color",
+        "options": {"value": "green"},
+        "body": "red\ngreen\nblue",
+    }
+
+
 def test_build_placeholder_node_rejects_unknown_directive():
     import pytest
 

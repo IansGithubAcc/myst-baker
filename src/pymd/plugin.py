@@ -5,6 +5,8 @@ import sys
 from pymd import transform
 from pymd.directives import (
     INPUT_SLIDER_DIRECTIVE,
+    INPUT_CHECKBOX_DIRECTIVE,
+    INPUT_DROPDOWN_DIRECTIVE,
     CALC_PYTHON_DIRECTIVE,
     PLOT_DIRECTIVE,
     build_placeholder_node,
@@ -12,7 +14,13 @@ from pymd.directives import (
 
 PLUGIN_SPEC = {
     "name": "pymd",
-    "directives": [INPUT_SLIDER_DIRECTIVE, CALC_PYTHON_DIRECTIVE, PLOT_DIRECTIVE],
+    "directives": [
+        INPUT_SLIDER_DIRECTIVE,
+        INPUT_CHECKBOX_DIRECTIVE,
+        INPUT_DROPDOWN_DIRECTIVE,
+        CALC_PYTHON_DIRECTIVE,
+        PLOT_DIRECTIVE,
+    ],
     "transforms": [{"stage": "document"}],
 }
 
