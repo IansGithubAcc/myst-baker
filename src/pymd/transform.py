@@ -194,7 +194,7 @@ def transform_document(ast):
         if function_name not in calc_namespace:
             raise NameError(
                 f"plot block references '{function_name}', which is not "
-                f"defined by any calc-python block on this page."
+                f"defined by any calc block on this page."
             )
         func = calc_namespace[function_name]
         grid_result = precompute.compute_grid(func, inputs)
