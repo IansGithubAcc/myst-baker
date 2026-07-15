@@ -9,6 +9,28 @@ with open(__file__.replace("render.py", "static/runtime.js")) as _f:
     RUNTIME_JS = _f.read()
 
 
+TRACE_FIELDS = {
+    "scatter": ("x", "y"),
+    "bar": ("x", "y"),
+    "box": ("x", "y"),
+    "violin": ("x", "y"),
+    "histogram": ("x",),
+    "pie": ("labels", "values"),
+}
+
+
+def _trace_data(value, trace_type):
+    if isinstance(value, dict):
+        return value
+    if trace_type not in TRACE_FIELDS:
+        raise ValueError(
+            f"plot type {trace_type!r} has no known positional field order; "
+            "either add it to TRACE_FIELDS or have its calc function return "
+            "a dict of Plotly trace fields instead of a tuple/list."
+        )
+    return dict(zip(TRACE_FIELDS[trace_type], value))
+
+
 def render_plot(plot_node, grid_result, input_specs):
     """Build a standalone HTML document for one plot block.
 
@@ -26,6 +48,9 @@ def render_plot(plot_node, grid_result, input_specs):
     trace_type = plot_node["arg"]
     trace_options = {
         k: v for k, v in plot_node["options"].items() if k not in ("data",)
+    }
+    grid_result = {
+        key: _trace_data(value, trace_type) for key, value in grid_result.items()
     }
 
     # CORRECTED (verified against a real headless-browser run: `page.on("pageerror")`

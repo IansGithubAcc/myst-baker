@@ -31,7 +31,7 @@ function pymdInitPlot(containerId, inputSpecs, grid, traceType, traceOptions) {
 
   function draw() {
     const data = currentData();
-    const trace = Object.assign({ type: traceType, x: data[0], y: data[1] }, traceOptions);
+    const trace = Object.assign({ type: traceType }, data, traceOptions);
     Plotly.react(plotEl, [trace], { autosize: true }, { responsive: true });
   }
 
