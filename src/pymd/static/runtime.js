@@ -38,13 +38,21 @@ function pymdInitPlot(containerId, inputSpecs, grid, traceType, traceOptions) {
   window.addEventListener('resize', () => Plotly.Plots.resize(plotEl));
 
   inputSpecs.forEach((spec) => {
-    pane
-      .addBinding(params, spec.name, {
-        min: spec.min,
-        max: spec.max,
-        step: spec.step,
-      })
-      .on('change', draw);
+    // Each input kind needs different Tweakpane binding options: a slider
+    // needs min/max/step, a checkbox needs none (Tweakpane infers a checkbox
+    // from the bound value already being a boolean), and a dropdown needs an
+    // `options` map of {label: value} pairs to render as a <select>.
+    let bindingOptions = {};
+    if (spec.kind === 'slider') {
+      bindingOptions = { min: spec.min, max: spec.max, step: spec.step };
+    } else if (spec.kind === 'dropdown') {
+      const options = {};
+      spec.choices.forEach((choice) => {
+        options[choice] = choice;
+      });
+      bindingOptions = { options };
+    }
+    pane.addBinding(params, spec.name, bindingOptions).on('change', draw);
   });
 
   draw();
