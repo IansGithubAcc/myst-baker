@@ -136,3 +136,166 @@ def revenue_by_quarter(growth):
 
 See the [Gallery](gallery.md) for these pieces combined into larger,
 multi-plot examples.
+
+## Histogram
+
+A `histogram` trace only needs one array — samples on `x`. A calc function
+feeding a histogram should return a single-element tuple, `(x,)`, not a
+bare list, so pymd can tell "one array" apart from "one array meant to be
+unpacked positionally."
+
+````md
+```{input-slider} spread
+:value: 1
+:min: 0.5
+:max: 3
+:step: 0.5
+```
+
+```{calc-python}
+def scaled_samples(spread):
+    base = [-2, -1.5, -1, -0.5, -0.5, 0, 0, 0, 0.5, 0.5, 1, 1.5, 2]
+    samples = [spread * b for b in base]
+    return (samples,)
+```
+
+```{plot} histogram
+:data: scaled_samples
+```
+````
+
+```{input-slider} spread
+:value: 1
+:min: 0.5
+:max: 3
+:step: 0.5
+```
+
+```{calc-python}
+def scaled_samples(spread):
+    base = [-2, -1.5, -1, -0.5, -0.5, 0, 0, 0, 0.5, 0.5, 1, 1.5, 2]
+    samples = [spread * b for b in base]
+    return (samples,)
+```
+
+```{plot} histogram
+:data: scaled_samples
+```
+
+## Pie chart
+
+A `pie` trace needs `labels` and `values` rather than `x`/`y`. Its
+`calc-python` function returns them in that order as a 2-tuple, the same
+shape as a scatter's `(x, y)` — just a different pair of names.
+
+````md
+```{input-slider} marketing_share
+:value: 20
+:min: 5
+:max: 40
+:step: 5
+```
+
+```{calc-python}
+def budget_allocation(marketing_share):
+    remaining = 100 - marketing_share
+    labels = ["Marketing", "Engineering", "Operations"]
+    values = [marketing_share, remaining * 0.6, remaining * 0.4]
+    return labels, values
+```
+
+```{plot} pie
+:data: budget_allocation
+```
+````
+
+```{input-slider} marketing_share
+:value: 20
+:min: 5
+:max: 40
+:step: 5
+```
+
+```{calc-python}
+def budget_allocation(marketing_share):
+    remaining = 100 - marketing_share
+    labels = ["Marketing", "Engineering", "Operations"]
+    values = [marketing_share, remaining * 0.6, remaining * 0.4]
+    return labels, values
+```
+
+```{plot} pie
+:data: budget_allocation
+```
+
+## Box and violin plots
+
+`box` and `violin` traces take the same `(x, y)` shape as `bar` — repeated
+`x` category labels group their matching `y` values into one distribution
+per category. The same data feeds both trace types below.
+
+````md
+```{input-slider} shift
+:value: 0
+:min: -2
+:max: 2
+:step: 0.5
+```
+
+```{calc-python}
+def quarterly_measurements(shift):
+    categories = []
+    measurements = []
+    base = {
+        "Q1": [10, 11, 9, 10.5, 12],
+        "Q2": [11, 12, 10, 13, 11.5],
+        "Q3": [13, 14, 12.5, 15, 13],
+        "Q4": [12, 13, 11, 12.5, 14],
+    }
+    for quarter, values in base.items():
+        for v in values:
+            categories.append(quarter)
+            measurements.append(v + shift)
+    return categories, measurements
+```
+
+```{plot} box
+:data: quarterly_measurements
+```
+
+```{plot} violin
+:data: quarterly_measurements
+```
+````
+
+```{input-slider} shift
+:value: 0
+:min: -2
+:max: 2
+:step: 0.5
+```
+
+```{calc-python}
+def quarterly_measurements(shift):
+    categories = []
+    measurements = []
+    base = {
+        "Q1": [10, 11, 9, 10.5, 12],
+        "Q2": [11, 12, 10, 13, 11.5],
+        "Q3": [13, 14, 12.5, 15, 13],
+        "Q4": [12, 13, 11, 12.5, 14],
+    }
+    for quarter, values in base.items():
+        for v in values:
+            categories.append(quarter)
+            measurements.append(v + shift)
+    return categories, measurements
+```
+
+```{plot} box
+:data: quarterly_measurements
+```
+
+```{plot} violin
+:data: quarterly_measurements
+```
