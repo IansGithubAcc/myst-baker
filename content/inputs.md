@@ -255,3 +255,114 @@ the one above (5 x 4 x 7 = 140 combinations) is still trivial; the build
 only starts to matter once a page's inputs multiply into the thousands —
 see [Calculations](calculations.md) for how the grid is built.
 ```
+
+## Checkbox
+
+An `input-checkbox`'s argument is the name other blocks refer to it by, same
+as `input-slider`. Its `:value:` option sets the initial state; pymd always
+precomputes both `true` and `false`, regardless of which one a page starts
+on.
+
+````md
+```{input-checkbox} inverted
+:value: false
+```
+
+```{calc-python}
+import math
+
+def maybe_inverted_sine(inverted):
+    x = [i / 10 for i in range(-31, 32)]
+    sign = -1 if inverted else 1
+    y = [sign * math.sin(xi) for xi in x]
+    return x, y
+```
+
+```{plot} scatter
+:data: maybe_inverted_sine
+:mode: lines
+```
+````
+
+```{input-checkbox} inverted
+:value: false
+```
+
+```{calc-python}
+import math
+
+def maybe_inverted_sine(inverted):
+    x = [i / 10 for i in range(-31, 32)]
+    sign = -1 if inverted else 1
+    y = [sign * math.sin(xi) for xi in x]
+    return x, y
+```
+
+```{plot} scatter
+:data: maybe_inverted_sine
+:mode: lines
+```
+
+## Dropdown
+
+An `input-dropdown`'s choices come from its body, one per line. Its
+`:value:` option picks which one is initially selected — omit it and pymd
+uses the first line. Every choice becomes one column of the precomputed
+grid, so a three-choice dropdown is exactly as cheap as a three-step
+slider.
+
+````md
+```{input-dropdown} waveform
+:value: sine
+sine
+square
+sawtooth
+```
+
+```{calc-python}
+import math
+
+def waveform_curve(waveform):
+    x = [i / 10 for i in range(-31, 32)]
+    if waveform == "sine":
+        y = [math.sin(xi) for xi in x]
+    elif waveform == "square":
+        y = [1.0 if math.sin(xi) >= 0 else -1.0 for xi in x]
+    else:
+        period = 2 * math.pi
+        y = [2 * ((xi / period) % 1) - 1 for xi in x]
+    return x, y
+```
+
+```{plot} scatter
+:data: waveform_curve
+:mode: lines
+```
+````
+
+```{input-dropdown} waveform
+:value: sine
+sine
+square
+sawtooth
+```
+
+```{calc-python}
+import math
+
+def waveform_curve(waveform):
+    x = [i / 10 for i in range(-31, 32)]
+    if waveform == "sine":
+        y = [math.sin(xi) for xi in x]
+    elif waveform == "square":
+        y = [1.0 if math.sin(xi) >= 0 else -1.0 for xi in x]
+    else:
+        period = 2 * math.pi
+        y = [2 * ((xi / period) % 1) - 1 for xi in x]
+    return x, y
+```
+
+```{plot} scatter
+:data: waveform_curve
+:mode: lines
+```
