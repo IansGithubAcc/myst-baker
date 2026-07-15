@@ -93,6 +93,46 @@ def test_slider_updates_plot_with_no_console_errors(built_site, page):
     assert overflow <= 1
 
 
+def test_slider_typed_value_reaching_grid_key_via_many_steps_from_origin(inputs_page_url, page):
+    # Regression test: Tweakpane's step-constraint snaps a typed/dragged
+    # value to a grid anchored at the slider's initial `:value:` (its
+    # "origin"), not at `:min:`, using raw floating-point arithmetic with
+    # no cleanup -- unlike precompute.input_values, which rounds to 10
+    # decimal places. For the "Fine steps and negative ranges" example
+    # (:value: 0.3, :min: -0.5, :step: 0.05), typing "-0.30" reaches that
+    # value 12 steps of 0.05 away from the origin, and Tweakpane's snap
+    # lands on -0.30000000000000004 instead of exactly -0.3 -- confirmed
+    # empirically by monkeypatching window.Object.assign inside the iframe
+    # to capture runtime.js's draw() call and inspecting the sender's
+    # rawValue_. String(-0.30000000000000004) doesn't match the
+    # precomputed grid's "-0.3" key, so the lookup misses and the plot
+    # goes blank.
+    console_errors = []
+    page.on("console", lambda msg: console_errors.append(msg.text) if msg.type == "error" else None)
+    page_errors = []
+    page.on("pageerror", lambda exc: page_errors.append(str(exc)))
+
+    page.goto(inputs_page_url)
+
+    # content/inputs.md's live iframes: One slider (0), Two sliders (1),
+    # Fine steps and negative ranges (2), Checkbox (3), Dropdown (4).
+    plot_frame = page.frame_locator("iframe").nth(2)
+    plot_locator = plot_frame.locator(".js-plotly-plot").first
+    plot_locator.wait_for(state="visible")
+
+    damping_input = plot_frame.locator(".tp-rotv input[type='text']").first
+    damping_input.fill("-0.30")
+    damping_input.press("Enter")
+
+    page.wait_for_timeout(300)
+
+    y = plot_locator.evaluate("el => el.data[0].y")
+
+    assert y, "plot data went empty -- the typed value's grid lookup key didn't match the precomputed grid"
+    assert console_errors == []
+    assert page_errors == []
+
+
 def test_dropdown_updates_plot_with_no_console_errors(inputs_page_url, page):
     console_errors = []
     page.on("console", lambda msg: console_errors.append(msg.text) if msg.type == "error" else None)

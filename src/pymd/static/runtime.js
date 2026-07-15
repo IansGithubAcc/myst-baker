@@ -21,8 +21,26 @@ function pymdInitPlot(containerId, inputSpecs, grid, traceType, traceOptions) {
     // Must match precompute.py's _stringify. JS numbers have no int/float
     // distinction, so String(1) is already "1" for any whole-number value
     // regardless of how it arrived (typed input, slider drag, JSON default) --
-    // no special-casing needed on this side, only on the Python side.
-    return inputSpecs.map((spec) => String(params[spec.name])).join('|');
+    // no special-casing needed on this side for that.
+    //
+    // Numeric (slider) values do need cleanup, though: Tweakpane's own
+    // step-constraint snaps a typed/dragged value to a grid anchored at the
+    // binding's *initial* value (its "origin"), not at :min:, using raw
+    // floating-point arithmetic with no rounding -- unlike
+    // precompute.input_values, which rounds every grid value to 10 decimal
+    // places. Confirmed empirically: with :value: 0.3, :min: -0.5, :step:
+    // 0.05, typing "-0.30" (12 steps of 0.05 from the origin) lands on
+    // -0.30000000000000004 instead of exactly -0.3, so String(v) here would
+    // produce a key the precomputed grid never has. Rounding to the same 10
+    // decimal places before stringifying keeps this side's keys aligned
+    // with precompute.input_values regardless of which value a Tweakpane
+    // binding's own math actually landed on.
+    return inputSpecs
+      .map((spec) => {
+        const v = params[spec.name];
+        return String(typeof v === 'number' ? Math.round(v * 1e10) / 1e10 : v);
+      })
+      .join('|');
   }
 
   function currentData() {
