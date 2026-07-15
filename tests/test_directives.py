@@ -13,15 +13,11 @@ def test_build_placeholder_node_input_slider():
     }
 
 
-def test_build_placeholder_node_calc_python():
-    source = "def f(a):\n    return a\n"
-    node = build_placeholder_node("calc-python", arg=None, options={}, body=source)
-    assert node == {
-        "type": "pymd-calc-python",
-        "arg": None,
-        "options": {},
-        "body": source,
-    }
+def test_build_placeholder_node_rejects_calc_python_as_directive():
+    import pytest
+
+    with pytest.raises(ValueError, match="calc-python"):
+        build_placeholder_node("calc-python", arg=None, options={}, body="")
 
 
 def test_build_placeholder_node_plot():

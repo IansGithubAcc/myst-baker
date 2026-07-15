@@ -7,7 +7,6 @@ from pymd.directives import (
     INPUT_SLIDER_DIRECTIVE,
     INPUT_CHECKBOX_DIRECTIVE,
     INPUT_DROPDOWN_DIRECTIVE,
-    CALC_PYTHON_DIRECTIVE,
     PLOT_DIRECTIVE,
     build_placeholder_node,
 )
@@ -18,7 +17,6 @@ PLUGIN_SPEC = {
         INPUT_SLIDER_DIRECTIVE,
         INPUT_CHECKBOX_DIRECTIVE,
         INPUT_DROPDOWN_DIRECTIVE,
-        CALC_PYTHON_DIRECTIVE,
         PLOT_DIRECTIVE,
     ],
     "transforms": [{"stage": "document"}],

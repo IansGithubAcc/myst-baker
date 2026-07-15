@@ -1,6 +1,6 @@
 # Gallery
 
-Full examples that combine several inputs, `calc-python` functions, and
+Full examples that combine several inputs, `calc` functions, and
 `plot` blocks on one page — the way a real doc page tends to look, rather
 than one concept at a time.
 
@@ -32,7 +32,7 @@ precomputed data.
 :step: 0.5
 ```
 
-```{calc-python}
+```python{calc}
 import math
 
 def damped_oscillator(amplitude, damping, frequency):
@@ -76,7 +76,7 @@ def damped_oscillator(amplitude, damping, frequency):
 :step: 0.5
 ```
 
-```{calc-python}
+```python{calc}
 import math
 
 def damped_oscillator(amplitude, damping, frequency):
@@ -101,7 +101,7 @@ def damped_oscillator(amplitude, damping, frequency):
 ## Projectile trajectory
 
 Two sliders (`velocity`, `angle`) parameterize a physical trajectory —
-`calc-python` isn't limited to `y = f(x)`; `x` and `y` here are both derived
+`calc` isn't limited to `y = f(x)`; `x` and `y` here are both derived
 from a shared time parameter.
 
 ````md
@@ -119,7 +119,7 @@ from a shared time parameter.
 :step: 5
 ```
 
-```{calc-python}
+```python{calc}
 import math
 
 def projectile_trajectory(velocity, angle):
@@ -155,7 +155,7 @@ def projectile_trajectory(velocity, angle):
 :step: 5
 ```
 
-```{calc-python}
+```python{calc}
 import math
 
 def projectile_trajectory(velocity, angle):
@@ -178,7 +178,7 @@ def projectile_trajectory(velocity, angle):
 
 ## Revenue vs. expenses
 
-One shared `growth` slider, two independent `calc-python` functions, two
+One shared `growth` slider, two independent `calc` functions, two
 `bar` plots side by side — a small dashboard from a handful of blocks.
 
 ````md
@@ -189,14 +189,14 @@ One shared `growth` slider, two independent `calc-python` functions, two
 :step: 0.05
 ```
 
-```{calc-python}
+```python{calc}
 def revenue_by_quarter(growth):
     quarters = ["Q1", "Q2", "Q3", "Q4"]
     revenue = [100 * (1 + growth) ** i for i in range(4)]
     return quarters, revenue
 ```
 
-```{calc-python}
+```python{calc}
 def expenses_by_quarter(growth):
     quarters = ["Q1", "Q2", "Q3", "Q4"]
     expenses = [70 * (1 + growth * 0.6) ** i for i in range(4)]
@@ -219,14 +219,14 @@ def expenses_by_quarter(growth):
 :step: 0.05
 ```
 
-```{calc-python}
+```python{calc}
 def revenue_by_quarter(growth):
     quarters = ["Q1", "Q2", "Q3", "Q4"]
     revenue = [100 * (1 + growth) ** i for i in range(4)]
     return quarters, revenue
 ```
 
-```{calc-python}
+```python{calc}
 def expenses_by_quarter(growth):
     quarters = ["Q1", "Q2", "Q3", "Q4"]
     expenses = [70 * (1 + growth * 0.6) ** i for i in range(4)]

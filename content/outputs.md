@@ -1,7 +1,7 @@
 # Plot outputs
 
 A `plot` block's argument is a Plotly trace type, and its `:data:` option
-names the `calc-python` function supplying that trace's data. A calc
+names the `calc` function supplying that trace's data. A calc
 function can return either a dict of Plotly field names, spread directly
 into the trace (`{"labels": [...], "values": [...]}`), or a plain
 tuple/list, matched positionally against the field order pymd already knows
@@ -21,7 +21,7 @@ returns a dict of the field names that trace needs.
 
 ## One dataset, three scatter modes
 
-The same slider and the same `calc-python` function feed three `plot`
+The same slider and the same `calc` function feed three `plot`
 blocks below, differing only in `:mode:` — a clean look at what `mode`
 alone changes.
 
@@ -33,7 +33,7 @@ alone changes.
 :step: 0.5
 ```
 
-```{calc-python}
+```python{calc}
 import math
 
 def cosine_curve(amplitude):
@@ -65,7 +65,7 @@ def cosine_curve(amplitude):
 :step: 0.5
 ```
 
-```{calc-python}
+```python{calc}
 import math
 
 def cosine_curve(amplitude):
@@ -99,7 +99,7 @@ def cosine_curve(amplitude):
 
 `:mode:` is a `scatter`-family concept; other trace types just ignore it.
 A `bar` trace only needs categories on `x` and values on `y` — which a
-`calc-python` function can return just as easily as numeric curves.
+`calc` function can return just as easily as numeric curves.
 
 ````md
 ```{input-slider} growth
@@ -109,7 +109,7 @@ A `bar` trace only needs categories on `x` and values on `y` — which a
 :step: 0.05
 ```
 
-```{calc-python}
+```python{calc}
 def revenue_by_quarter(growth):
     quarters = ["Q1", "Q2", "Q3", "Q4"]
     revenue = [100 * (1 + growth) ** i for i in range(4)]
@@ -128,7 +128,7 @@ def revenue_by_quarter(growth):
 :step: 0.05
 ```
 
-```{calc-python}
+```python{calc}
 def revenue_by_quarter(growth):
     quarters = ["Q1", "Q2", "Q3", "Q4"]
     revenue = [100 * (1 + growth) ** i for i in range(4)]
@@ -157,7 +157,7 @@ unpacked positionally."
 :step: 0.5
 ```
 
-```{calc-python}
+```python{calc}
 def scaled_samples(spread):
     base = [-2, -1.5, -1, -0.5, -0.5, 0, 0, 0, 0.5, 0.5, 1, 1.5, 2]
     samples = [spread * b for b in base]
@@ -176,7 +176,7 @@ def scaled_samples(spread):
 :step: 0.5
 ```
 
-```{calc-python}
+```python{calc}
 def scaled_samples(spread):
     base = [-2, -1.5, -1, -0.5, -0.5, 0, 0, 0, 0.5, 0.5, 1, 1.5, 2]
     samples = [spread * b for b in base]
@@ -190,7 +190,7 @@ def scaled_samples(spread):
 ## Pie chart
 
 A `pie` trace needs `labels` and `values` rather than `x`/`y`. Its
-`calc-python` function returns them in that order as a 2-tuple, the same
+`calc` function returns them in that order as a 2-tuple, the same
 shape as a scatter's `(x, y)` — just a different pair of names.
 
 ````md
@@ -201,7 +201,7 @@ shape as a scatter's `(x, y)` — just a different pair of names.
 :step: 5
 ```
 
-```{calc-python}
+```python{calc}
 def budget_allocation(marketing_share):
     remaining = 100 - marketing_share
     labels = ["Marketing", "Engineering", "Operations"]
@@ -221,7 +221,7 @@ def budget_allocation(marketing_share):
 :step: 5
 ```
 
-```{calc-python}
+```python{calc}
 def budget_allocation(marketing_share):
     remaining = 100 - marketing_share
     labels = ["Marketing", "Engineering", "Operations"]
@@ -247,7 +247,7 @@ per category. The same data feeds both trace types below.
 :step: 0.5
 ```
 
-```{calc-python}
+```python{calc}
 def quarterly_measurements(shift):
     categories = []
     measurements = []
@@ -280,7 +280,7 @@ def quarterly_measurements(shift):
 :step: 0.5
 ```
 
-```{calc-python}
+```python{calc}
 def quarterly_measurements(shift):
     categories = []
     measurements = []

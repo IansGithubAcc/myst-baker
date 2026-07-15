@@ -1,4 +1,4 @@
-KNOWN_DIRECTIVES = {"input-slider", "input-checkbox", "input-dropdown", "calc-python", "plot"}
+KNOWN_DIRECTIVES = {"input-slider", "input-checkbox", "input-dropdown", "plot"}
 
 # CORRECTED (verified against real `myst build --debug`): mystmd's directive-option
 # type-check (myst-parser's contentFromNode, see ParseTypesEnum) only recognizes the
@@ -8,8 +8,7 @@ KNOWN_DIRECTIVES = {"input-slider", "input-checkbox", "input-dropdown", "calc-py
 # used capitalized "String"/"Number" here for `arg`/`options`, which matched none of
 # mystmd's branches and silently produced `undefined` (no warning) for every arg/option
 # value; input-slider's `arg`/`options` all came back empty in the built mdast until
-# this was lowercased. CALC_PYTHON_DIRECTIVE's `body` type was already lowercase
-# "string" in the brief and needed no change.
+# this was lowercased.
 INPUT_SLIDER_DIRECTIVE = {
     "name": "input-slider",
     "doc": "A numeric slider input, bound to a name referenced by calc function parameters.",
@@ -45,12 +44,6 @@ INPUT_DROPDOWN_DIRECTIVE = {
         },
     },
     "body": {"type": "string", "doc": "Choices, one per line"},
-}
-
-CALC_PYTHON_DIRECTIVE = {
-    "name": "calc-python",
-    "doc": "A raw Python function definition, executed once per grid combination.",
-    "body": {"type": "string", "doc": "Python source defining one function"},
 }
 
 PLOT_DIRECTIVE = {
