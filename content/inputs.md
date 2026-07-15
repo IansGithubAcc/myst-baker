@@ -2,7 +2,7 @@
 
 pymd ships three input widgets — `input-slider`, `input-checkbox`, and
 `input-dropdown` — and any number of them can appear on a page in any
-combination: each `calc-python` function picks up whichever ones match its
+combination: each `calc` function picks up whichever ones match its
 parameter names. This page runs through the configurations you'll actually
 use: a single slider, multiple sliders sharing one function, fine steps and
 negative ranges, a checkbox toggle, and a dropdown of named choices.
@@ -26,7 +26,7 @@ The simplest case: a single input driving a single-parameter function.
 :step: 0.25
 ```
 
-```{calc-python}
+```python{calc}
 import math
 
 def sine_amplitude(amplitude):
@@ -48,7 +48,7 @@ def sine_amplitude(amplitude):
 :step: 0.25
 ```
 
-```{calc-python}
+```python{calc}
 import math
 
 def sine_amplitude(amplitude):
@@ -83,7 +83,7 @@ values. Here, `a` and `b` together shape a parabola.
 :step: 1
 ```
 
-```{calc-python}
+```python{calc}
 def parabola(a, b):
     x = [i / 2 for i in range(-10, 11)]
     y = [a * xi**2 + b for xi in x]
@@ -110,7 +110,7 @@ def parabola(a, b):
 :step: 1
 ```
 
-```{calc-python}
+```python{calc}
 def parabola(a, b):
     x = [i / 2 for i in range(-10, 11)]
     y = [a * xi**2 + b for xi in x]
@@ -136,7 +136,7 @@ runs from -0.5 (growth) to 1.0 (decay) in steps of 0.05.
 :step: 0.05
 ```
 
-```{calc-python}
+```python{calc}
 import math
 
 def damped_envelope(damping):
@@ -158,7 +158,7 @@ def damped_envelope(damping):
 :step: 0.05
 ```
 
-```{calc-python}
+```python{calc}
 import math
 
 def damped_envelope(damping):
@@ -191,7 +191,7 @@ on.
 :value: false
 ```
 
-```{calc-python}
+```python{calc}
 import math
 
 def maybe_inverted_sine(inverted):
@@ -211,7 +211,7 @@ def maybe_inverted_sine(inverted):
 :value: false
 ```
 
-```{calc-python}
+```python{calc}
 import math
 
 def maybe_inverted_sine(inverted):
@@ -242,7 +242,7 @@ square
 sawtooth
 ```
 
-```{calc-python}
+```python{calc}
 import math
 
 def waveform_curve(waveform):
@@ -270,7 +270,7 @@ square
 sawtooth
 ```
 
-```{calc-python}
+```python{calc}
 import math
 
 def waveform_curve(waveform):

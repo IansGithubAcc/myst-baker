@@ -15,10 +15,10 @@ Every interactive figure in these docs is built from the same three pieces:
 1. **An input widget** (`input-slider`, `input-checkbox`, or
    `input-dropdown`) — declares a named input and the values pymd should
    precompute for it.
-2. **`calc-python`** — a normal Python function whose parameter names match
+2. **`calc`** — a normal Python function whose parameter names match
    input names. pymd calls it once per combination of input values.
 3. **`plot`** — a Plotly trace (scatter, bar, histogram, pie, box, violin,
-   and more), fed by one `calc-python` function's output.
+   and more), fed by one `calc` function's output.
 
 ```{tip}
 Because everything is precomputed, the published site is fully static
@@ -38,7 +38,7 @@ Here's the whole pipeline in five lines: one slider, one function, one plot.
 :step: 0.5
 ```
 
-```{calc-python}
+```python{calc}
 def scale_line(k):
     x = list(range(-5, 6))
     y = [k * xi for xi in x]
@@ -60,7 +60,7 @@ And here's that same block, live — drag the slider:
 :step: 0.5
 ```
 
-```{calc-python}
+```python{calc}
 def scale_line(k):
     x = list(range(-5, 6))
     y = [k * xi for xi in x]
@@ -77,7 +77,7 @@ def scale_line(k):
 - **[Input widgets](inputs.md)** — slider, checkbox, and dropdown
   configurations: single input, multiple inputs, fine steps and negative
   ranges, and choice-based inputs.
-- **[Calculations](calculations.md)** — how `calc-python` blocks work, and
+- **[Calculations](calculations.md)** — how `calc` blocks work, and
   how several of them can share a page.
 - **[Plot outputs](outputs.md)** — the different Plotly trace types
   (scatter, bar, histogram, pie, box, violin) and modes a `plot` block can
