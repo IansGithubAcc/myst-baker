@@ -12,10 +12,13 @@ anywhere at page-view time.
 
 Every interactive figure in these docs is built from the same three pieces:
 
-1. **`input-slider`** — declares a named numeric input and its range.
+1. **An input widget** (`input-slider`, `input-checkbox`, or
+   `input-dropdown`) — declares a named input and the values pymd should
+   precompute for it.
 2. **`calc-python`** — a normal Python function whose parameter names match
    input names. pymd calls it once per combination of input values.
-3. **`plot`** — a Plotly trace, fed by one `calc-python` function's output.
+3. **`plot`** — a Plotly trace (scatter, bar, histogram, pie, box, violin,
+   and more), fed by one `calc-python` function's output.
 
 ```{tip}
 Because everything is precomputed, the published site is fully static
@@ -71,11 +74,13 @@ def scale_line(k):
 
 ## Where to go next
 
-- **[Input widgets](inputs.md)** — slider configurations: single input,
-  multiple inputs, fine steps, negative ranges.
+- **[Input widgets](inputs.md)** — slider, checkbox, and dropdown
+  configurations: single input, multiple inputs, fine steps and negative
+  ranges, and choice-based inputs.
 - **[Calculations](calculations.md)** — how `calc-python` blocks work, and
   how several of them can share a page.
-- **[Plot outputs](outputs.md)** — the different Plotly trace types and
-  modes a `plot` block can render.
+- **[Plot outputs](outputs.md)** — the different Plotly trace types
+  (scatter, bar, histogram, pie, box, violin) and modes a `plot` block can
+  render.
 - **[Gallery](gallery.md)** — full worked examples that combine several
   inputs, functions, and plots on one page.

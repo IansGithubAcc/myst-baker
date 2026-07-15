@@ -1,17 +1,22 @@
 # Plot outputs
 
 A `plot` block's argument is a Plotly trace type, and its `:data:` option
-names the `calc-python` function supplying `(x, y)`. Its `:mode:` option is
-forwarded to Plotly for trace types that use one (the `scatter` family:
-`lines`, `markers`, `lines+markers`).
+names the `calc-python` function supplying that trace's data. A calc
+function can return either a dict of Plotly field names, spread directly
+into the trace (`{"labels": [...], "values": [...]}`), or a plain
+tuple/list, matched positionally against the field order pymd already knows
+for six trace types: `scatter`, `bar`, `box`, and `violin` take `(x, y)`;
+`histogram` takes `(x,)`; `pie` takes `(labels, values)`. Its `:mode:`
+option is forwarded to Plotly for trace types that use one (the `scatter`
+family: `lines`, `markers`, `lines+markers`).
 
 ```{note}
 By design, `plot`'s argument can be any Plotly trace type — the directive
-doesn't hardcode a list of chart kinds. This build forwards `:data:` and
-`:mode:` verbatim into the trace; other trace-specific options aren't wired
-up yet, so today's practical range is whatever a bare `type` + `mode` +
-`x`/`y` can express — which already covers line charts, scatter plots, and
-bar charts, as below.
+doesn't hardcode a list of chart kinds. `:data:` and `:mode:` are forwarded
+verbatim into the trace; other trace-specific options aren't wired up yet.
+The six trace types above have a known positional field order out of the
+box; any other Plotly trace type still works as long as its calc function
+returns a dict of the field names that trace needs.
 ```
 
 ## One dataset, three scatter modes

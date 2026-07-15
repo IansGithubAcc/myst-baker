@@ -102,11 +102,12 @@ def test_dropdown_updates_plot_with_no_console_errors(inputs_page_url, page):
     page.goto(inputs_page_url)
 
     # content/inputs.md's live iframes, in document order: One slider (0),
-    # Two sliders (1), Three sliders (2), Fine steps (3), Checkbox (4),
-    # Dropdown (5) -- the dropdown example is the 6th plot on the page.
-    # Confirmed empirically: page.locator("iframe").count() == 6 on the
-    # built page.
-    plot_frame = page.frame_locator("iframe").nth(5)
+    # Two sliders (1), Fine steps (2), Checkbox (3), Dropdown (4) -- the
+    # "Three sliders" section was removed as redundant with "Two sliders",
+    # shifting the dropdown example from the 6th to the 5th plot on the
+    # page. Confirmed empirically: page.locator("iframe").count() == 5 on
+    # the built page.
+    plot_frame = page.frame_locator("iframe").nth(4)
     plot_locator = plot_frame.locator(".js-plotly-plot").first
     plot_locator.wait_for(state="visible")
 

@@ -1,10 +1,11 @@
 # Input widgets
 
-pymd currently ships one input widget — `input-slider` — but a single
-directive covers a lot of ground: any number of sliders can appear on a
-page, and each `calc-python` function picks up whichever ones match its
+pymd ships three input widgets — `input-slider`, `input-checkbox`, and
+`input-dropdown` — and any number of them can appear on a page in any
+combination: each `calc-python` function picks up whichever ones match its
 parameter names. This page runs through the configurations you'll actually
-use: one input, several inputs, fine steps, and negative ranges.
+use: a single slider, multiple sliders sharing one function, fine steps and
+negative ranges, a checkbox toggle, and a dropdown of named choices.
 
 ```{note}
 An `input-slider`'s argument is the name other blocks refer to it by. Its
@@ -121,84 +122,6 @@ def parabola(a, b):
 :mode: lines
 ```
 
-## Three sliders
-
-Nothing changes structurally with a third input — the precomputed grid just
-grows by another factor. Amplitude, frequency, and phase together drive one
-sine curve.
-
-````md
-```{input-slider} amp
-:value: 1
-:min: 0
-:max: 2
-:step: 0.5
-```
-
-```{input-slider} freq
-:value: 1
-:min: 0.5
-:max: 2
-:step: 0.5
-```
-
-```{input-slider} phase
-:value: 0
-:min: 0
-:max: 6
-:step: 1
-```
-
-```{calc-python}
-import math
-
-def sine_wave_phase(amp, freq, phase):
-    x = [i / 10 for i in range(-31, 32)]
-    y = [amp * math.sin(freq * xi + phase) for xi in x]
-    return x, y
-```
-
-```{plot} scatter
-:data: sine_wave_phase
-:mode: lines
-```
-````
-
-```{input-slider} amp
-:value: 1
-:min: 0
-:max: 2
-:step: 0.5
-```
-
-```{input-slider} freq
-:value: 1
-:min: 0.5
-:max: 2
-:step: 0.5
-```
-
-```{input-slider} phase
-:value: 0
-:min: 0
-:max: 6
-:step: 1
-```
-
-```{calc-python}
-import math
-
-def sine_wave_phase(amp, freq, phase):
-    x = [i / 10 for i in range(-31, 32)]
-    y = [amp * math.sin(freq * xi + phase) for xi in x]
-    return x, y
-```
-
-```{plot} scatter
-:data: sine_wave_phase
-:mode: lines
-```
-
 ## Fine steps and negative ranges
 
 Slider options aren't limited to small integer ranges — `:step:` accepts
@@ -250,10 +173,10 @@ def damped_envelope(damping):
 ```
 
 ```{tip}
-That last example precomputes 31 values for one input. Three sliders like
-the one above (5 x 4 x 7 = 140 combinations) is still trivial; the build
-only starts to matter once a page's inputs multiply into the thousands —
-see [Calculations](calculations.md) for how the grid is built.
+That last example precomputes 31 values for one input. Two sliders like the
+"Two sliders" example above (7 x 7 = 49 combinations) is still trivial; the
+build only starts to matter once a page's inputs multiply into the
+thousands — see [Calculations](calculations.md) for how the grid is built.
 ```
 
 ## Checkbox
