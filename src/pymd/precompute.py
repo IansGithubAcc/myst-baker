@@ -23,6 +23,17 @@ def input_values(min_value, max_value, step):
     return [round(min_value + i * step, 10) for i in range(steps + 1)]
 
 
+def values_for_input(spec):
+    kind = spec["kind"]
+    if kind == "slider":
+        return input_values(spec["min"], spec["max"], spec["step"])
+    if kind == "checkbox":
+        return [True, False]
+    if kind == "dropdown":
+        return list(spec["choices"])
+    raise ValueError(f"unknown input kind: {kind!r}")
+
+
 def matched_inputs(func, inputs):
     signature = inspect.signature(func)
     matched = []
@@ -30,9 +41,9 @@ def matched_inputs(func, inputs):
         if name not in inputs:
             raise ValueError(
                 f"Function '{func.__name__}' has parameter '{name}' with no "
-                f"matching input-slider block on this page."
+                f"matching input block on this page."
             )
-        matched.append((name, input_values(*inputs[name])))
+        matched.append((name, values_for_input(inputs[name])))
     return matched
 
 
@@ -48,11 +59,11 @@ def max_grid_size():
 
 
 def _stringify(value):
-    # Must match runtime.js's `String(v)` exactly. JS has no int/float
-    # distinction, so String(1) === "1" for a whole-number value however it
-    # arrived; Python's str() renders the same whole-number float as "1.0".
-    # Without this, any fractional :step: whose grid includes a whole-number
-    # point produces a key here that the client's lookup can never match.
+    # Must match runtime.js's `String(v)` exactly. JS's String(true)/String(false)
+    # is lowercase, but Python's str(True)/str(False) is capitalized -- checkbox
+    # inputs need this special-cased or the browser's grid lookup never matches.
+    if isinstance(value, bool):
+        return "true" if value else "false"
     if isinstance(value, float) and value.is_integer():
         return str(int(value))
     return str(value)

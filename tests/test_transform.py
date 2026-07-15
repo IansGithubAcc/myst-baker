@@ -183,3 +183,60 @@ def test_transform_document_orders_input_specs_by_function_parameter_order():
     input_specs, _ = json.JSONDecoder().raw_decode(html, array_start)
 
     assert [spec["name"] for spec in input_specs] == ["a", "b"]
+
+
+def test_transform_document_supports_checkbox_input():
+    input_node = {
+        "type": "pymd-input-checkbox",
+        "arg": "enabled",
+        "options": {"value": True},
+        "body": "",
+    }
+    calc_node = {
+        "type": "pymd-calc-python",
+        "arg": None,
+        "options": {},
+        "body": "def get_plot_data(enabled):\n    return int(enabled) * 2\n",
+    }
+    plot_node = {
+        "type": "pymd-plot",
+        "arg": "scatter",
+        "options": {"data": "get_plot_data"},
+        "body": "",
+    }
+
+    result = transform_document(_page_ast(input_node, calc_node, plot_node))
+
+    iframe_node = result["children"][2]
+    html = _decode_iframe_html(iframe_node)
+    assert '"true": 2' in html
+    assert '"false": 0' in html
+
+
+def test_transform_document_supports_dropdown_input():
+    input_node = {
+        "type": "pymd-input-dropdown",
+        "arg": "color",
+        "options": {},
+        "body": "red\ngreen\nblue",
+    }
+    calc_node = {
+        "type": "pymd-calc-python",
+        "arg": None,
+        "options": {},
+        "body": "def get_plot_data(color):\n    return len(color)\n",
+    }
+    plot_node = {
+        "type": "pymd-plot",
+        "arg": "scatter",
+        "options": {"data": "get_plot_data"},
+        "body": "",
+    }
+
+    result = transform_document(_page_ast(input_node, calc_node, plot_node))
+
+    iframe_node = result["children"][2]
+    html = _decode_iframe_html(iframe_node)
+    assert '"red": 3' in html
+    assert '"green": 5' in html
+    assert '"blue": 4' in html

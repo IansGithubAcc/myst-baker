@@ -25,6 +25,59 @@ def _iter_nodes(node):
         yield from _iter_nodes(child)
 
 
+def _dropdown_choices(body):
+    return [line.strip() for line in body.splitlines() if line.strip()]
+
+
+def _slider_precompute_spec(node):
+    options = node["options"]
+    return {"kind": "slider", "min": options["min"], "max": options["max"], "step": options["step"]}
+
+
+def _checkbox_precompute_spec(node):
+    return {"kind": "checkbox"}
+
+
+def _dropdown_precompute_spec(node):
+    return {"kind": "dropdown", "choices": _dropdown_choices(node["body"])}
+
+
+_INPUT_PRECOMPUTE_SPECS = {
+    "pymd-input-slider": _slider_precompute_spec,
+    "pymd-input-checkbox": _checkbox_precompute_spec,
+    "pymd-input-dropdown": _dropdown_precompute_spec,
+}
+
+
+def _slider_client_spec(name, node):
+    options = node["options"]
+    return {
+        "kind": "slider",
+        "name": name,
+        "value": options["value"],
+        "min": options["min"],
+        "max": options["max"],
+        "step": options["step"],
+    }
+
+
+def _checkbox_client_spec(name, node):
+    return {"kind": "checkbox", "name": name, "value": node["options"]["value"]}
+
+
+def _dropdown_client_spec(name, node):
+    choices = _dropdown_choices(node["body"])
+    value = node["options"].get("value", choices[0] if choices else None)
+    return {"kind": "dropdown", "name": name, "value": value, "choices": choices}
+
+
+_INPUT_CLIENT_SPECS = {
+    "pymd-input-slider": _slider_client_spec,
+    "pymd-input-checkbox": _checkbox_client_spec,
+    "pymd-input-dropdown": _dropdown_client_spec,
+}
+
+
 def _collect_nodes(ast):
     inputs = {}
     input_nodes = {}
@@ -32,10 +85,9 @@ def _collect_nodes(ast):
 
     for node in _iter_nodes(ast):
         node_type = node.get("type")
-        if node_type == "pymd-input-slider":
+        if node_type in _INPUT_PRECOMPUTE_SPECS:
             name = node["arg"]
-            options = node["options"]
-            inputs[name] = (options["min"], options["max"], options["step"])
+            inputs[name] = _INPUT_PRECOMPUTE_SPECS[node_type](node)
             input_nodes[name] = node
         elif node_type == "pymd-calc-python":
             exec(node["body"], calc_namespace)
@@ -121,13 +173,7 @@ def transform_document(ast):
         grid_result = precompute.compute_grid(func, inputs)
 
         input_specs = [
-            {
-                "name": name,
-                "value": input_nodes[name]["options"]["value"],
-                "min": input_nodes[name]["options"]["min"],
-                "max": input_nodes[name]["options"]["max"],
-                "step": input_nodes[name]["options"]["step"],
-            }
+            _INPUT_CLIENT_SPECS[input_nodes[name]["type"]](name, input_nodes[name])
             for name in inspect_params(func)
             if name in input_nodes
         ]
