@@ -146,3 +146,76 @@ source — a function stays in scope for the whole page. `plot` blocks look
 it up by the name given in `:data:`, so the order they appear in doesn't
 matter, as long as the function is defined somewhere on the page.
 ```
+
+## Returning a dict for other trace types
+
+A `calc` function isn't limited to the `(x, y)`-style tuples used above.
+Returning a **dict** instead hands myst-baker the exact Plotly field names to
+use, spread directly into the trace — which is how you drive any Plotly
+trace type `plot` doesn't already know a positional field order for. Here,
+a `heatmap` (not one of the six built-in types) is fed by a function
+returning `{"z": [[...]]}`:
+
+````md
+```{input-slider} spread
+:value: 3
+:min: 1
+:max: 6
+:step: 0.5
+```
+
+```python{calc}
+import math
+
+def gaussian_heatmap(spread):
+    size = 15
+    center = size // 2
+    return {
+        "z": [
+            [
+                math.exp(-((x - center) ** 2 + (y - center) ** 2) / (2 * spread**2))
+                for x in range(size)
+            ]
+            for y in range(size)
+        ]
+    }
+```
+
+```{plot} heatmap
+:data: gaussian_heatmap
+```
+````
+
+```{input-slider} spread
+:value: 3
+:min: 1
+:max: 6
+:step: 0.5
+```
+
+```python{calc}
+import math
+
+def gaussian_heatmap(spread):
+    size = 15
+    center = size // 2
+    return {
+        "z": [
+            [
+                math.exp(-((x - center) ** 2 + (y - center) ** 2) / (2 * spread**2))
+                for x in range(size)
+            ]
+            for y in range(size)
+        ]
+    }
+```
+
+```{plot} heatmap
+:data: gaussian_heatmap
+```
+
+```{tip}
+A dict return works for the six built-in trace types too — it's not
+exclusive to unsupported ones. Positional tuples are just a shorthand for
+the common cases; see [Plot outputs](outputs.md) for the full field list.
+```

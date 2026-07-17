@@ -114,9 +114,12 @@ def test_slider_typed_value_reaching_grid_key_via_many_steps_from_origin(inputs_
 
     page.goto(inputs_page_url)
 
-    # docs/guide/inputs.md's live iframes: One slider (0), Two sliders (1),
-    # Fine steps and negative ranges (2), Checkbox (3), Dropdown (4).
-    plot_frame = page.frame_locator("iframe").nth(2)
+    # docs/guide/inputs.md's live iframes: Sliders (0), Fine steps and
+    # negative ranges (1), Checkbox (2), Dropdown (3) -- "One slider" and
+    # "Two sliders" were merged into one "Sliders" section as redundant
+    # (a single slider is a trivial case of multiple sliders), shifting
+    # every later section's index down by one.
+    plot_frame = page.frame_locator("iframe").nth(1)
     plot_locator = plot_frame.locator(".js-plotly-plot").first
     plot_locator.wait_for(state="visible")
 
@@ -141,13 +144,13 @@ def test_dropdown_updates_plot_with_no_console_errors(inputs_page_url, page):
 
     page.goto(inputs_page_url)
 
-    # docs/guide/inputs.md's live iframes, in document order: One slider (0),
-    # Two sliders (1), Fine steps (2), Checkbox (3), Dropdown (4) -- the
-    # "Three sliders" section was removed as redundant with "Two sliders",
-    # shifting the dropdown example from the 6th to the 5th plot on the
-    # page. Confirmed empirically: page.locator("iframe").count() == 5 on
-    # the built page.
-    plot_frame = page.frame_locator("iframe").nth(4)
+    # docs/guide/inputs.md's live iframes, in document order: Sliders (0),
+    # Fine steps and negative ranges (1), Checkbox (2), Dropdown (3) -- see
+    # the comment above test_slider_typed_value_reaching_grid_key_via_many_steps_from_origin
+    # for why the dropdown example shifted from the 5th to the 4th plot on
+    # the page. Confirmed empirically: page.locator("iframe").count() == 4
+    # on the built page.
+    plot_frame = page.frame_locator("iframe").nth(3)
     plot_locator = plot_frame.locator(".js-plotly-plot").first
     plot_locator.wait_for(state="visible")
 

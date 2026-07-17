@@ -4,8 +4,9 @@ myst-baker ships three input widgets — `input-slider`, `input-checkbox`, and
 `input-dropdown` — and any number of them can appear on a page in any
 combination: each `calc` function picks up whichever ones match its
 parameter names. This page runs through the configurations you'll actually
-use: a single slider, multiple sliders sharing one function, fine steps and
-negative ranges, a checkbox toggle, and a dropdown of named choices.
+use: sliders (including multiple sliders sharing one function, and
+fine-grained or negative ranges), a checkbox toggle, and a dropdown of named
+choices.
 
 ```{note}
 An `input-slider`'s argument is the name other blocks refer to it by. Its
@@ -14,59 +15,14 @@ precomputes — every combination becomes one row in the build-time grid, so
 narrower ranges and coarser steps mean smaller, faster builds.
 ```
 
-## One slider
+## Sliders
 
-The simplest case: a single input driving a single-parameter function.
-
-````md
-```{input-slider} amplitude
-:value: 1
-:min: 0
-:max: 2
-:step: 0.25
-```
-
-```python{calc}
-import math
-
-def sine_amplitude(amplitude):
-    x = [i / 10 for i in range(-31, 32)]
-    y = [amplitude * math.sin(xi) for xi in x]
-    return x, y
-```
-
-```{plot} scatter
-:data: sine_amplitude
-:mode: lines
-```
-````
-
-```{input-slider} amplitude
-:value: 1
-:min: 0
-:max: 2
-:step: 0.25
-```
-
-```python{calc}
-import math
-
-def sine_amplitude(amplitude):
-    x = [i / 10 for i in range(-31, 32)]
-    y = [amplitude * math.sin(xi) for xi in x]
-    return x, y
-```
-
-```{plot} scatter
-:data: sine_amplitude
-:mode: lines
-```
-
-## Two sliders
-
-A function can take as many parameters as you like — myst-baker matches each one
-to an `input-slider` by name and builds the cartesian product of their
-values. Here, `a` and `b` together shape a parabola.
+An `input-slider`'s argument is the name other blocks refer to it by, and a
+`calc` function's parameters are matched to sliders by name — a single
+slider drives a single-parameter function exactly the same way multiple
+sliders drive a multi-parameter one. A function can take as many slider
+parameters as it needs; myst-baker builds the cartesian product of all of
+their values. Here, `a` and `b` together shape a parabola.
 
 ````md
 ```{input-slider} a
@@ -174,7 +130,7 @@ def damped_envelope(damping):
 
 ```{tip}
 That last example precomputes 31 values for one input. Two sliders like the
-"Two sliders" example above (7 x 7 = 49 combinations) is still trivial; the
+"Sliders" example above (7 x 7 = 49 combinations) is still trivial; the
 build only starts to matter once a page's inputs multiply into the
 thousands — see [Calculations](calculations.md) for how the grid is built.
 ```
