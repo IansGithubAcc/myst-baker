@@ -1,14 +1,17 @@
 # Plot outputs
 
 A `plot` block's argument is a Plotly trace type, and its `:data:` option
-names the `calc` function supplying that trace's data. A calc
-function can return either a dict of Plotly field names, spread directly
-into the trace (`{"labels": [...], "values": [...]}`), or a plain
-tuple/list, matched positionally against the field order myst-baker already knows
-for six trace types: `scatter`, `bar`, `box`, and `violin` take `(x, y)`;
-`histogram` takes `(x,)`; `pie` takes `(labels, values)`. Its `:mode:`
-option is forwarded to Plotly for trace types that use one (the `scatter`
-family: `lines`, `markers`, `lines+markers`).
+names the `calc` function supplying that trace's data — or a
+comma-separated list of `calc` function names to render as several
+traces on one plot (see [Multiple traces on one plot](#multiple-traces-on-one-plot)
+below). A calc function can return either a dict of Plotly field names,
+spread directly into the trace (`{"labels": [...], "values": [...]}`), or
+a plain tuple/list, matched positionally against the field order
+myst-baker already knows for six trace types: `scatter`, `bar`, `box`,
+and `violin` take `(x, y)`; `histogram` takes `(x,)`; `pie` takes
+`(labels, values)`. Its `:mode:` option is forwarded to Plotly for trace
+types that use one (the `scatter` family: `lines`, `markers`,
+`lines+markers`).
 
 ```{note}
 By design, `plot`'s argument can be any Plotly trace type — the directive
@@ -141,6 +144,69 @@ def revenue_by_quarter(growth):
 
 See the [examples](../examples/revenue-vs-expenses.md) for these pieces combined into larger,
 multi-plot pages.
+
+## Multiple traces on one plot
+
+Give `:data:` a comma-separated list of `calc` function names instead of
+one, and they render as separate traces on the *same* plot rather than
+separate plots — each function still runs independently, but Plotly draws
+them together, grouped side by side for `bar` traces. The functions must
+share the same parameters, since one control panel drives all of them.
+Each trace's legend name defaults to its function name (underscores
+become spaces); a function returning a dict can set its own `"name"` to
+override that default.
+
+````md
+```{input-slider} growth
+:value: 0.1
+:min: -0.2
+:max: 0.5
+:step: 0.05
+```
+
+```python{calc}
+def revenue_by_quarter(growth):
+    quarters = ["Q1", "Q2", "Q3", "Q4"]
+    revenue = [100 * (1 + growth) ** i for i in range(4)]
+    return quarters, revenue
+```
+
+```python{calc}
+def expenses_by_quarter(growth):
+    quarters = ["Q1", "Q2", "Q3", "Q4"]
+    expenses = [70 * (1 + growth * 0.6) ** i for i in range(4)]
+    return quarters, expenses
+```
+
+```{plot} bar
+:data: revenue_by_quarter,expenses_by_quarter
+```
+````
+
+```{input-slider} growth
+:value: 0.1
+:min: -0.2
+:max: 0.5
+:step: 0.05
+```
+
+```python{calc}
+def revenue_by_quarter(growth):
+    quarters = ["Q1", "Q2", "Q3", "Q4"]
+    revenue = [100 * (1 + growth) ** i for i in range(4)]
+    return quarters, revenue
+```
+
+```python{calc}
+def expenses_by_quarter(growth):
+    quarters = ["Q1", "Q2", "Q3", "Q4"]
+    expenses = [70 * (1 + growth * 0.6) ** i for i in range(4)]
+    return quarters, expenses
+```
+
+```{plot} bar
+:data: revenue_by_quarter,expenses_by_quarter
+```
 
 ## Histogram
 

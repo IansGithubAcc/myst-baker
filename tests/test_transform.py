@@ -235,6 +235,99 @@ def test_transform_document_raises_for_non_python_calc_language():
         transform_document(_page_ast(input_node, calc_node, plot_node))
 
 
+def _decode_plot_call_args(html):
+    """Decode `mystBakerInitPlot(container_id, input_specs, grid, trace_type,
+    trace_options)`'s five positional arguments from a rendered plot's iframe
+    HTML, in call order. Finds the *last* occurrence, same as elsewhere in
+    this file -- runtime.js (embedded above it) *defines* the function, so
+    the last match is the actual invocation.
+    """
+    call_index = html.rindex("mystBakerInitPlot(")
+    idx = html.index("(", call_index) + 1
+    decoder = json.JSONDecoder()
+    args = []
+    for _ in range(5):
+        while html[idx] in " \n\t,":
+            idx += 1
+        value, idx = decoder.raw_decode(html, idx)
+        args.append(value)
+    return args
+
+
+def test_transform_document_combines_multiple_functions_into_one_plot_with_traces():
+    input_node = {
+        "type": "myst-baker-input-slider",
+        "arg": "growth",
+        "options": {"value": 0, "min": 0, "max": 1, "step": 1},
+        "body": "",
+    }
+    revenue_node = _calc_node(
+        "def revenue_by_quarter(growth):\n    return ['Q1'], [100 + growth]\n"
+    )
+    expenses_node = _calc_node(
+        "def expenses_by_quarter(growth):\n    return ['Q1'], [70 + growth]\n"
+    )
+    plot_node = {
+        "type": "myst-baker-plot",
+        "arg": "bar",
+        "options": {"data": "revenue_by_quarter,expenses_by_quarter"},
+        "body": "",
+    }
+
+    ast = {
+        "type": "root",
+        "children": [input_node, revenue_node, expenses_node, plot_node],
+    }
+
+    result = transform_document(ast)
+
+    html = _decode_iframe_html(result["children"][-1])
+    _, _, grid, _, _ = _decode_plot_call_args(html)
+
+    # Each grid entry is a list of one trace dict per combined function, in
+    # the order given to `:data:`, each carrying a default `name` (derived
+    # from the function name) so Plotly can tell them apart in the legend.
+    assert grid["0"] == [
+        {"x": ["Q1"], "y": [100], "name": "Revenue by quarter"},
+        {"x": ["Q1"], "y": [70], "name": "Expenses by quarter"},
+    ]
+    assert grid["1"] == [
+        {"x": ["Q1"], "y": [101], "name": "Revenue by quarter"},
+        {"x": ["Q1"], "y": [71], "name": "Expenses by quarter"},
+    ]
+
+
+def test_transform_document_raises_when_combined_plot_functions_have_different_parameters():
+    input_node_a = {
+        "type": "myst-baker-input-slider",
+        "arg": "a",
+        "options": {"value": 1, "min": 0, "max": 1, "step": 1},
+        "body": "",
+    }
+    input_node_b = {
+        "type": "myst-baker-input-slider",
+        "arg": "b",
+        "options": {"value": 1, "min": 0, "max": 1, "step": 1},
+        "body": "",
+    }
+    fn_a_node = _calc_node("def fn_a(a):\n    return [a], [a]\n")
+    fn_b_node = _calc_node("def fn_b(b):\n    return [b], [b]\n")
+    plot_node = {
+        "type": "myst-baker-plot",
+        "arg": "bar",
+        "options": {"data": "fn_a,fn_b"},
+        "body": "",
+    }
+
+    ast = {
+        "type": "root",
+        "children": [input_node_a, input_node_b, fn_a_node, fn_b_node, plot_node],
+    }
+
+    with pytest.raises(ValueError, match="share the same inputs"):
+        transform_document(ast)
+
+
 def test_transform_document_ignores_plain_python_code_fence():
     # A fence that merely happens to be lang="python" (no `{calc}` suffix,
     # e.g. an ordinary prose/example snippet) is not a live calc block --

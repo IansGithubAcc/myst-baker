@@ -212,21 +212,38 @@ def transform_document(ast):
     inputs, input_nodes, calc_namespace = _collect_nodes(ast)
 
     def replace_plot(plot_node):
-        function_name = plot_node["options"]["data"]
-        if function_name not in calc_namespace:
-            raise NameError(
-                f"plot block references '{function_name}', which is not "
-                f"defined by any calc block on this page."
-            )
-        func = calc_namespace[function_name]
-        grid_result = precompute.compute_grid(func, inputs)
+        function_names = [name.strip() for name in plot_node["options"]["data"].split(",")]
+        funcs = []
+        for function_name in function_names:
+            if function_name not in calc_namespace:
+                raise NameError(
+                    f"plot block references '{function_name}', which is not "
+                    f"defined by any calc block on this page."
+                )
+            funcs.append(calc_namespace[function_name])
+
+        param_names = inspect_params(funcs[0])
+        for function_name, func in zip(function_names, funcs):
+            these_params = inspect_params(func)
+            if these_params != param_names:
+                raise ValueError(
+                    f"plot block combines '{function_names[0]}' ({param_names}) "
+                    f"and '{function_name}' ({these_params}) as traces on one "
+                    f"plot, but they take different parameters; functions "
+                    f"combined into one plot must share the same inputs."
+                )
+
+        grids = [
+            (function_name, precompute.compute_grid(func, inputs))
+            for function_name, func in zip(function_names, funcs)
+        ]
 
         input_specs = [
             _INPUT_CLIENT_SPECS[input_nodes[name]["type"]](name, input_nodes[name])
-            for name in inspect_params(func)
+            for name in param_names
             if name in input_nodes
         ]
-        html = render.render_plot(plot_node, grid_result, input_specs)
+        html = render.render_plot(plot_node, grids, input_specs)
         return _iframe_node(html)
 
     return _rewrite_tree(ast, replace_plot)

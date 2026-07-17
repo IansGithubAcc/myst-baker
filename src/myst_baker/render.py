@@ -31,7 +31,11 @@ def _trace_data(value, trace_type):
     return dict(zip(TRACE_FIELDS[trace_type], value))
 
 
-def render_plot(plot_node, grid_result, input_specs):
+def _prettify_trace_name(function_name):
+    return function_name.replace("_", " ").capitalize()
+
+
+def render_plot(plot_node, grids, input_specs):
     """Build a standalone HTML document for one plot block.
 
     CORRECTED (verified against real `myst build`/`myst start` + a headless
@@ -43,15 +47,36 @@ def render_plot(plot_node, grid_result, input_specs):
     This function now returns a *complete* HTML document, because the caller
     (transform.py) embeds it as the `srcdoc`/`src` of a real `<iframe>` node
     instead, which *does* execute scripts (in its own document/origin).
+
+    `grids` is a list of `(function_name, grid_result)` pairs, one per
+    `calc` function named in `:data:` (comma-separated for more than one).
+    A single-function plot keeps today's flat `{key: {plotly fields}}` grid
+    shape, byte-for-byte, so every pre-existing plot's rendered output is
+    unaffected. Combining more than one function into one plot switches to
+    `{key: [{plotly fields}, ...]}` -- one trace dict per function, in
+    `:data:` order -- each defaulted with a `name` (derived from its
+    function name) so Plotly's legend/hover can tell the traces apart;
+    runtime.js normalizes both shapes into a trace list before drawing.
     """
     container_id = f"myst-baker-plot-{uuid.uuid4().hex[:8]}"
     trace_type = plot_node["arg"]
     trace_options = {
         k: v for k, v in plot_node["options"].items() if k not in ("data",)
     }
-    grid_result = {
-        key: _trace_data(value, trace_type) for key, value in grid_result.items()
-    }
+    if len(grids) == 1:
+        _, single_grid = grids[0]
+        grid_result = {
+            key: _trace_data(value, trace_type) for key, value in single_grid.items()
+        }
+    else:
+        grid_result = {}
+        for key in grids[0][1]:
+            traces = []
+            for function_name, grid in grids:
+                data = dict(_trace_data(grid[key], trace_type))
+                data.setdefault("name", _prettify_trace_name(function_name))
+                traces.append(data)
+            grid_result[key] = traces
 
     # CORRECTED (verified against a real headless-browser run: `page.on("pageerror")`
     # reported "Unexpected token 'export'" followed by "Tweakpane is not defined"):

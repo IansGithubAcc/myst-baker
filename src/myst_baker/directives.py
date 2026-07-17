@@ -51,7 +51,14 @@ PLOT_DIRECTIVE = {
     "doc": "A Plotly output block. The argument is a Plotly trace type (e.g. scatter).",
     "arg": {"type": "string", "doc": "Plotly trace type"},
     "options": {
-        "data": {"type": "string", "doc": "Name of the calc function providing this plot's data"},
+        "data": {
+            "type": "string",
+            "doc": (
+                "Name of the calc function providing this plot's data, or a "
+                "comma-separated list of calc function names to render as "
+                "multiple traces on one plot (all must share the same inputs)"
+            ),
+        },
         # CORRECTED (verified against real `myst build --debug`): mystmd's directive-option
         # validation (directive-options-correct) silently strips any option not declared here
         # (only a warning, no error, no data) before the placeholder node is ever built --

@@ -186,11 +186,12 @@ def test_new_output_types_render_with_no_console_errors(outputs_page_url, page):
     page.goto(outputs_page_url)
 
     # docs/guide/outputs.md's live plots, in document order: 3 scatter-mode
-    # plots, 1 bar, 1 histogram, 1 pie, 1 box, 1 violin = 8 total. Confirmed
-    # empirically against the built page (including each trace's `.type`)
-    # rather than assumed from document structure alone.
+    # plots, 1 bar, 1 combined-trace bar (revenue + expenses), 1 histogram,
+    # 1 pie, 1 box, 1 violin = 9 total. Confirmed empirically against the
+    # built page (including each trace's `.type`) rather than assumed from
+    # document structure alone.
     iframe_count = page.locator("iframe").count()
-    assert iframe_count == 8
+    assert iframe_count == 9
 
     for i in range(iframe_count):
         frame = page.frame_locator("iframe").nth(i)

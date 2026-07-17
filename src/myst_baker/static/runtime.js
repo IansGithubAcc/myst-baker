@@ -48,9 +48,19 @@ function mystBakerInitPlot(containerId, inputSpecs, grid, traceType, traceOption
   }
 
   function draw() {
+    // A single combined `calc` function's grid entry is a bare object (see
+    // render.py); combining several into one plot makes it an array, one
+    // trace object per function. Normalizing here keeps a single draw path
+    // for both shapes instead of branching the whole function in two.
     const data = currentData();
-    const trace = Object.assign({ type: traceType }, data, traceOptions);
-    Plotly.react(plotEl, [trace], { autosize: true }, { responsive: true });
+    const traces = (Array.isArray(data) ? data : [data]).map((d) =>
+      Object.assign({ type: traceType }, d, traceOptions)
+    );
+    const layout = { autosize: true };
+    if (traceType === 'bar' && traces.length > 1) {
+      layout.barmode = 'group';
+    }
+    Plotly.react(plotEl, traces, layout, { responsive: true });
   }
 
   window.addEventListener('resize', () => Plotly.Plots.resize(plotEl));

@@ -1,11 +1,11 @@
 # Revenue vs. expenses
 
-One shared `growth` slider, two independent `calc` functions, two
-`bar` plots side by side — a small dashboard from a handful of blocks.
-The expense model below is tagged `:hide` — a reader of a dashboard like
-this cares about the numbers, not the cost formula behind them — while
-the revenue model stays visible, showing that a hidden and a visible
-`calc` block can sit side by side on the same page.
+One shared `growth` slider, two independent `calc` functions, one `bar`
+plot with both as side-by-side traces — a small dashboard from a handful
+of blocks. The expense model below is tagged `:hide` — a reader of a
+dashboard like this cares about the numbers, not the cost formula behind
+them — while the revenue model stays visible, showing that a hidden and a
+visible `calc` block can sit side by side on the same page.
 
 ```{input-slider} growth
 :value: 0.1
@@ -28,14 +28,8 @@ def expenses_by_quarter(growth):
     return quarters, expenses
 ```
 
-Revenue:
+Revenue and expenses, same `growth` slider, one chart:
 
 ```{plot} bar
-:data: revenue_by_quarter
-```
-
-Expenses, same `growth` slider:
-
-```{plot} bar
-:data: expenses_by_quarter
+:data: revenue_by_quarter,expenses_by_quarter
 ```
