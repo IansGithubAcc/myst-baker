@@ -37,8 +37,12 @@ jobs:
           node-version: 18.x
       - name: Install MyST
         run: npm install -g mystmd
-      - name: Build HTML Assets
-        run: myst build --html
+      - name: Install uv
+        run: curl -Ls https://astral.sh/uv/install.sh | sh
+      - name: Sync dependencies
+        run: uv sync
+      - name: Build HTML
+        run: uv run myst build --html
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
