@@ -1,6 +1,6 @@
 import pytest
 
-from pymd.render import _trace_data, TRACE_FIELDS
+from myst_baker.render import _trace_data, TRACE_FIELDS
 
 
 def test_trace_data_passes_dict_through_unchanged():

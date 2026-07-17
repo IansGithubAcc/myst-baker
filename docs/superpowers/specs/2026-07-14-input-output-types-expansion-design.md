@@ -1,8 +1,8 @@
-# pymd: Expanding Input and Output Types
+# myst-baker: Expanding Input and Output Types
 
 ## Concept
 
-pymd currently supports exactly one input kind (`input-slider`) and one output kind (`plot`, generic over Plotly trace types but only ever fed `(x, y)` data). This is the first real generalization of that MVP: two new input kinds (`input-checkbox`, `input-dropdown`) and support for four more Plotly trace types (`bar`, `histogram`, `pie`, `box`/`violin`) on the existing `plot` directive. It replaces the single `if node_type == "pymd-input-slider"` branch in `transform.py` and the hardcoded `x: data[0], y: data[1]` in `runtime.js` with kind-dispatched equivalents.
+myst-baker currently supports exactly one input kind (`input-slider`) and one output kind (`plot`, generic over Plotly trace types but only ever fed `(x, y)` data). This is the first real generalization of that MVP: two new input kinds (`input-checkbox`, `input-dropdown`) and support for four more Plotly trace types (`bar`, `histogram`, `pie`, `box`/`violin`) on the existing `plot` directive. It replaces the single `if node_type == "myst-baker-input-slider"` branch in `transform.py` and the hardcoded `x: data[0], y: data[1]` in `runtime.js` with kind-dispatched equivalents.
 
 **Explicitly out of scope for this round** (considered and rejected):
 - Radio buttons — would need Tweakpane's `plugin-essentials` add-on (a second CDN dependency) to render as a real radio grid; without it, "radio" would just be a dropdown alias with no visual difference. Not worth the dependency for this batch.
@@ -54,7 +54,7 @@ No new directive — `plot`'s `arg` already passes straight through as the Plotl
 
 **Two accepted return shapes from a calc function**, mirroring Python's own args/kwargs duality:
 
-1. **Dict → kwargs.** `{"x": [...], "y": [...]}`, `{"labels": [...], "values": [...]}`, etc. Spread directly into the Plotly trace object. Keys map straight to Plotly's own field names, so this already covers every current and future trace type with zero pymd-side mapping code.
+1. **Dict → kwargs.** `{"x": [...], "y": [...]}`, `{"labels": [...], "values": [...]}`, etc. Spread directly into the Plotly trace object. Keys map straight to Plotly's own field names, so this already covers every current and future trace type with zero myst-baker-side mapping code.
 2. **Tuple/list → positional args.** `(x, y)`, `(x,)`, `(labels, values)`. Zipped against a small per-trace-type ordered field list:
 
    ```python

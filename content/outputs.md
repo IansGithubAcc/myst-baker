@@ -4,7 +4,7 @@ A `plot` block's argument is a Plotly trace type, and its `:data:` option
 names the `calc` function supplying that trace's data. A calc
 function can return either a dict of Plotly field names, spread directly
 into the trace (`{"labels": [...], "values": [...]}`), or a plain
-tuple/list, matched positionally against the field order pymd already knows
+tuple/list, matched positionally against the field order myst-baker already knows
 for six trace types: `scatter`, `bar`, `box`, and `violin` take `(x, y)`;
 `histogram` takes `(x,)`; `pie` takes `(labels, values)`. Its `:mode:`
 option is forwarded to Plotly for trace types that use one (the `scatter`
@@ -146,7 +146,7 @@ multi-plot examples.
 
 A `histogram` trace only needs one array — samples on `x`. A calc function
 feeding a histogram should return a single-element tuple, `(x,)`, not a
-bare list, so pymd can tell "one array" apart from "one array meant to be
+bare list, so myst-baker can tell "one array" apart from "one array meant to be
 unpacked positionally."
 
 ````md

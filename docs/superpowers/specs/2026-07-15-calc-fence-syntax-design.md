@@ -29,13 +29,13 @@ def compound_growth(rate):
 
 Because the info string no longer starts with `{`, mystmd's parser treats
 this as an ordinary code fence — real `python` language token up front, so
-editors highlight it like any other Python fence — and pymd recognizes it
+editors highlight it like any other Python fence — and myst-baker recognizes it
 itself during the document transform, which already walks the whole page
 AST.
 
 This is possible because `calc-python` has no MyST-directive-only
 requirements: it declares no `:key: value` options (`CALC_PYTHON_DIRECTIVE`
-in `src/pymd/directives.py` only has a `body`), and its source is never
+in `src/myst_baker/directives.py` only has a `body`), and its source is never
 rendered to the reader — `transform.py` only `exec`s it into a shared
 namespace. The directives that *do* need MyST's directive machinery
 (`input-slider`, `input-checkbox`, `input-dropdown`, `plot`) all rely on
@@ -55,7 +55,7 @@ block") with no rewording needed.
 ## Mechanism
 
 1. **Recognition**: for every plain `code` mdast node encountered during the
-   existing whole-tree walk (`_collect_nodes` in `src/pymd/transform.py`),
+   existing whole-tree walk (`_collect_nodes` in `src/myst_baker/transform.py`),
    reconstruct the fence's info string from `lang` + `meta` (mdast splits on
    the first whitespace; with no space, the entire string lands in `lang`
    and `meta` is empty — reconstructing handles both `python{calc}` and
@@ -81,9 +81,9 @@ block") with no rewording needed.
 ## Removed
 
 - `CALC_PYTHON_DIRECTIVE` and the `"calc-python"` entry in `KNOWN_DIRECTIVES`
-  (`src/pymd/directives.py`).
+  (`src/myst_baker/directives.py`).
 - `CALC_PYTHON_DIRECTIVE`'s registration in `PLUGIN_SPEC["directives"]`
-  (`src/pymd/plugin.py`) — mystmd no longer calls `--directive` for this
+  (`src/myst_baker/plugin.py`) — mystmd no longer calls `--directive` for this
   block at all, since it's not a directive.
 
 ## Migration
@@ -97,7 +97,7 @@ occurrence is rewritten to `` ```python{calc} ``:
 
 ## Testing
 
-- Existing tests that build/expect `pymd-calc-python` placeholder nodes are
+- Existing tests that build/expect `myst-baker-calc-python` placeholder nodes are
   updated to build/expect plain `code` nodes with `lang: "python{calc}"`
   instead.
 - New case: a `code` node with a non-Python language prefix (e.g.

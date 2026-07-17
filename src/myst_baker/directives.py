@@ -64,7 +64,7 @@ PLOT_DIRECTIVE = {
 
 
 def build_placeholder_node(directive_name, arg, options, body):
-    """Build the single placeholder mdast node for a pymd directive.
+    """Build the single placeholder mdast node for a myst-baker directive.
 
     Verified against the real `myst` CLI (`uv run myst build --debug`): MyST's
     stdin payload for a `--directive` invocation does have `arg`/`options`/`body`
@@ -79,7 +79,7 @@ def build_placeholder_node(directive_name, arg, options, body):
     if directive_name not in KNOWN_DIRECTIVES:
         raise ValueError(f"unknown directive: {directive_name}")
     return {
-        "type": f"pymd-{directive_name}",
+        "type": f"myst-baker-{directive_name}",
         "arg": arg,
         "options": options,
         "body": body,

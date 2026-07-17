@@ -2,7 +2,7 @@ import base64
 import inspect
 import re
 
-from pymd import precompute, render
+from myst_baker import precompute, render
 
 def inspect_params(func):
     return list(inspect.signature(func).parameters)
@@ -13,9 +13,9 @@ def _iter_nodes(node):
 
     CORRECTED (verified against real `myst build --debug`): real mystmd wraps
     top-level content in an intermediate "block" node -- the document root's
-    `children` is `[{"type": "block", "children": [<our pymd-* nodes>]}]`, not
-    a flat list of the pymd-* nodes directly. Scanning only `ast["children"]`
-    (as this function originally did) never found any pymd nodes at all in a
+    `children` is `[{"type": "block", "children": [<our myst-baker-* nodes>]}]`, not
+    a flat list of the myst-baker-* nodes directly. Scanning only `ast["children"]`
+    (as this function originally did) never found any myst-baker nodes at all in a
     real build, so the transform silently no-op'd (no error, but the plot
     directive was never replaced with rendered HTML). Recursing into
     `children` at any depth fixes this while remaining correct for the flat
@@ -44,9 +44,9 @@ def _dropdown_precompute_spec(node):
 
 
 _INPUT_PRECOMPUTE_SPECS = {
-    "pymd-input-slider": _slider_precompute_spec,
-    "pymd-input-checkbox": _checkbox_precompute_spec,
-    "pymd-input-dropdown": _dropdown_precompute_spec,
+    "myst-baker-input-slider": _slider_precompute_spec,
+    "myst-baker-input-checkbox": _checkbox_precompute_spec,
+    "myst-baker-input-dropdown": _dropdown_precompute_spec,
 }
 
 
@@ -73,9 +73,9 @@ def _dropdown_client_spec(name, node):
 
 
 _INPUT_CLIENT_SPECS = {
-    "pymd-input-slider": _slider_client_spec,
-    "pymd-input-checkbox": _checkbox_client_spec,
-    "pymd-input-dropdown": _dropdown_client_spec,
+    "myst-baker-input-slider": _slider_client_spec,
+    "myst-baker-input-checkbox": _checkbox_client_spec,
+    "myst-baker-input-dropdown": _dropdown_client_spec,
 }
 
 
@@ -123,7 +123,7 @@ def _collect_nodes(ast):
 
 
 def _replace_plots(node, replace_plot):
-    """Return a copy of `node` with every descendant `pymd-plot` node (at any
+    """Return a copy of `node` with every descendant `myst-baker-plot` node (at any
     depth) replaced by `replace_plot(plot_node)`. See `_iter_nodes` for why
     this needs to recurse rather than only look at the immediate children.
     """
@@ -133,7 +133,7 @@ def _replace_plots(node, replace_plot):
 
     new_children = []
     for child in children:
-        if child.get("type") == "pymd-plot":
+        if child.get("type") == "myst-baker-plot":
             new_children.append(replace_plot(child))
         else:
             new_children.append(_replace_plots(child, replace_plot))

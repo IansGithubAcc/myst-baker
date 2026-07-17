@@ -1,7 +1,7 @@
 # Calculations
 
 A `calc` block is a plain Python function definition — no
-decorators, no special API. pymd `exec`s its source into a shared namespace
+decorators, no special API. myst-baker `exec`s its source into a shared namespace
 once per page, then calls whichever function a `plot` block names, once for
 every combination of that function's matched inputs.
 
@@ -63,7 +63,7 @@ def compound_growth(rate):
 ## Several calculations sharing one input
 
 A page can hold as many `calc` blocks as it needs, and they can
-share input sliders freely — pymd just matches each function's parameter
+share input sliders freely — myst-baker just matches each function's parameter
 names to whatever `input-slider` blocks exist on the page. Below, one
 `rate` slider drives *two* independent functions and *two* plots: discrete
 annual compounding and continuous compounding.

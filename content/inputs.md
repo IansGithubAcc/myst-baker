@@ -1,6 +1,6 @@
 # Input widgets
 
-pymd ships three input widgets — `input-slider`, `input-checkbox`, and
+myst-baker ships three input widgets — `input-slider`, `input-checkbox`, and
 `input-dropdown` — and any number of them can appear on a page in any
 combination: each `calc` function picks up whichever ones match its
 parameter names. This page runs through the configurations you'll actually
@@ -9,7 +9,7 @@ negative ranges, a checkbox toggle, and a dropdown of named choices.
 
 ```{note}
 An `input-slider`'s argument is the name other blocks refer to it by. Its
-`:min:`/`:max:`/`:step:` options define the full set of values pymd
+`:min:`/`:max:`/`:step:` options define the full set of values myst-baker
 precomputes — every combination becomes one row in the build-time grid, so
 narrower ranges and coarser steps mean smaller, faster builds.
 ```
@@ -64,7 +64,7 @@ def sine_amplitude(amplitude):
 
 ## Two sliders
 
-A function can take as many parameters as you like — pymd matches each one
+A function can take as many parameters as you like — myst-baker matches each one
 to an `input-slider` by name and builds the cartesian product of their
 values. Here, `a` and `b` together shape a parabola.
 
@@ -182,7 +182,7 @@ thousands — see [Calculations](calculations.md) for how the grid is built.
 ## Checkbox
 
 An `input-checkbox`'s argument is the name other blocks refer to it by, same
-as `input-slider`. Its `:value:` option sets the initial state; pymd always
+as `input-slider`. Its `:value:` option sets the initial state; myst-baker always
 precomputes both `true` and `false`, regardless of which one a page starts
 on.
 
@@ -229,7 +229,7 @@ def maybe_inverted_sine(inverted):
 ## Dropdown
 
 An `input-dropdown`'s choices come from its body, one per line. Its
-`:value:` option picks which one is initially selected — omit it and pymd
+`:value:` option picks which one is initially selected — omit it and myst-baker
 uses the first line. Every choice becomes one column of the precomputed
 grid, so a three-choice dropdown is exactly as cheap as a three-step
 slider.

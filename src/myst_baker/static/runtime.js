@@ -1,4 +1,4 @@
-function pymdInitPlot(containerId, inputSpecs, grid, traceType, traceOptions) {
+function mystBakerInitPlot(containerId, inputSpecs, grid, traceType, traceOptions) {
   const container = document.getElementById(containerId);
   const controlsEl = document.createElement('div');
   const plotEl = document.createElement('div');

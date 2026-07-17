@@ -1,4 +1,4 @@
-from pymd.directives import build_placeholder_node
+from myst_baker.directives import build_placeholder_node
 
 
 def test_build_placeholder_node_input_slider():
@@ -6,7 +6,7 @@ def test_build_placeholder_node_input_slider():
         "input-slider", arg="a", options={"value": 5, "min": 0, "max": 10, "step": 1}, body=""
     )
     assert node == {
-        "type": "pymd-input-slider",
+        "type": "myst-baker-input-slider",
         "arg": "a",
         "options": {"value": 5, "min": 0, "max": 10, "step": 1},
         "body": "",
@@ -25,7 +25,7 @@ def test_build_placeholder_node_plot():
         "plot", arg="scatter", options={"data": "get_plot_data", "mode": "lines"}, body=""
     )
     assert node == {
-        "type": "pymd-plot",
+        "type": "myst-baker-plot",
         "arg": "scatter",
         "options": {"data": "get_plot_data", "mode": "lines"},
         "body": "",
@@ -37,7 +37,7 @@ def test_build_placeholder_node_input_checkbox():
         "input-checkbox", arg="enabled", options={"value": True}, body=""
     )
     assert node == {
-        "type": "pymd-input-checkbox",
+        "type": "myst-baker-input-checkbox",
         "arg": "enabled",
         "options": {"value": True},
         "body": "",
@@ -52,7 +52,7 @@ def test_build_placeholder_node_input_dropdown():
         body="red\ngreen\nblue",
     )
     assert node == {
-        "type": "pymd-input-dropdown",
+        "type": "myst-baker-input-dropdown",
         "arg": "color",
         "options": {"value": "green"},
         "body": "red\ngreen\nblue",

@@ -1,8 +1,8 @@
-# pymd: Precomputed Interactive Docs via a MyST Executable Plugin
+# myst-baker: Precomputed Interactive Docs via a MyST Executable Plugin
 
 ## Concept
 
-A documentation authoring layer, built as a MyST executable plugin, where markdown fences declare input widgets, Python calculation functions, and output blocks (plots, tables, etc.). At build time, pymd runs the calc functions over the full cartesian grid of possible input values and bakes the results into the page as JSON. The published site is fully static: moving a slider is a JSON key lookup plus a plot update in JS. No server, no live Python kernel, hostable anywhere static files are served.
+A documentation authoring layer, built as a MyST executable plugin, where markdown fences declare input widgets, Python calculation functions, and output blocks (plots, tables, etc.). At build time, myst-baker runs the calc functions over the full cartesian grid of possible input values and bakes the results into the page as JSON. The published site is fully static: moving a slider is a JSON key lookup plus a plot update in JS. No server, no live Python kernel, hostable anywhere static files are served.
 
 ## Why MyST (Route decision)
 
@@ -10,17 +10,17 @@ Three implementation routes were considered: a standalone tool (own parser/rende
 
 ## Architecture
 
-pymd is a Python script registered in `myst.yml` as a MyST **executable plugin**:
+myst-baker is a Python script registered in `myst.yml` as a MyST **executable plugin**:
 
 ```yaml
 project:
   plugins:
     - type: executable
-      path: pymd_plugin.py
+      path: myst_baker_plugin.py
 ```
 
 MyST invokes this script three ways, all AST-in/AST-out as JSON over stdin/stdout:
-- no args → prints `PLUGIN_SPEC` (declares pymd's directives and a document-stage transform)
+- no args → prints `PLUGIN_SPEC` (declares myst-baker's directives and a document-stage transform)
 - `--directive <name>` → called once per block instance at parse time, turning a fenced block into a lightweight placeholder AST node carrying its options/body verbatim (no computation yet)
 - `--transform document` → called once per page with the whole page AST. This is where the real work happens:
   1. Walk the AST, collect all `input-*` nodes (name → widget config), all calc-definition nodes (function name → source), all `plot` nodes (which function they reference, which Plotly trace type)
@@ -36,14 +36,14 @@ Because this transform runs as a normal step inside MyST's own build, `myst star
 
 - **Widget library: Tweakpane** — small, actively maintained (241k weekly downloads), good plugin ecosystem, purpose-built for parameter panels.
 - **Plotting library: Plotly.js** — chosen for MVP for its breadth of chart types (relevant for likely future engineering-style outputs: contours, heatmaps, 3D surfaces) and its purpose-built update-in-place API (`Plotly.react`). Heaviest of the candidates considered (~3.6MB), but CDN-cached. **This choice is explicitly revisitable** if it doesn't work well in practice.
-- These two libraries are **decoupled** from each other (Option B from the brainstorm): the widget layer and the plotting layer are independent, glued together by pymd's own small runtime. This was chosen over a unified single-library approach (e.g. Vega-Lite's own param-binding) specifically because pymd's roadmap includes non-chart output kinds; a unified approach would only cover chart-shaped outputs and require a second mechanism for anything else anyway.
+- These two libraries are **decoupled** from each other (Option B from the brainstorm): the widget layer and the plotting layer are independent, glued together by myst-baker's own small runtime. This was chosen over a unified single-library approach (e.g. Vega-Lite's own param-binding) specifically because myst-baker's roadmap includes non-chart output kinds; a unified approach would only cover chart-shaped outputs and require a second mechanism for anything else anyway.
 
 ## Directive syntax (illustrative, not settled)
 
 MyST directives take a name, an optional argument, options (`:key: value` lines or a `---`-delimited YAML block), and a body. Two distinct patterns are used, chosen per side based on the shape of the underlying library's own vocabulary:
 
 - **Inputs use explicit per-kind directive names** (`input-slider`, `input-dropdown`, `input-checkbox`, ...), because Tweakpane's control vocabulary is small, stable, and *inferred* from a combination of the bound value's type and the options given — not from an explicit type keyword. Naming the kind directly in the directive keeps the control kind visible in the source rather than requiring a reader to infer it from which options happen to be present.
-- **Plots use a single generic `plot` directive whose argument is Plotly's own trace-type string** (`scatter`, `bar`, `heatmap`, `surface`, ...), because Plotly already has a large, stable, self-documenting vocabulary of trace types. Options forward near-verbatim into that trace's own config fields. This means every Plotly trace type is available without pymd maintaining a directive per chart type.
+- **Plots use a single generic `plot` directive whose argument is Plotly's own trace-type string** (`scatter`, `bar`, `heatmap`, `surface`, ...), because Plotly already has a large, stable, self-documenting vocabulary of trace types. Options forward near-verbatim into that trace's own config fields. This means every Plotly trace type is available without myst-baker maintaining a directive per chart type.
 
 Illustrative example (**not a locked design** — see the open question below):
 

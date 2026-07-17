@@ -1,5 +1,5 @@
 [project]
-name = "pymd"
+name = "myst-baker"
 version = "0.1.0"
 description = "Precomputed interactive docs via a MyST executable plugin"
 readme = "README.md"
@@ -9,7 +9,7 @@ dependencies = [
 ]
 
 [project.scripts]
-pymd-plugin = "pymd.plugin:main"
+myst-baker-plugin = "myst_baker.plugin:main"
 
 [dependency-groups]
 dev = [
@@ -22,4 +22,4 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/pymd"]
+packages = ["src/myst_baker"]

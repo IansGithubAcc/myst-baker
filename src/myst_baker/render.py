@@ -44,7 +44,7 @@ def render_plot(plot_node, grid_result, input_specs):
     (transform.py) embeds it as the `srcdoc`/`src` of a real `<iframe>` node
     instead, which *does* execute scripts (in its own document/origin).
     """
-    container_id = f"pymd-plot-{uuid.uuid4().hex[:8]}"
+    container_id = f"myst-baker-plot-{uuid.uuid4().hex[:8]}"
     trace_type = plot_node["arg"]
     trace_options = {
         k: v for k, v in plot_node["options"].items() if k not in ("data",)
@@ -65,7 +65,7 @@ def render_plot(plot_node, grid_result, input_specs):
     # runtime.js (which references the `Tweakpane.Pane` global, unchanged) still
     # works. This must all be one `<script type="module">` block: module scripts
     # are deferred (like `defer`), so a later *classic* script calling
-    # `pymdInitPlot` could otherwise run before the import finishes; Plotly's CDN
+    # `mystBakerInitPlot` could otherwise run before the import finishes; Plotly's CDN
     # build, by contrast, *is* a real UMD bundle (verified: it's wrapped in
     # `!function(t,e){"object"==typeof exports...}`, attaching `window.Plotly`
     # synchronously), so it's safe to keep as a plain classic `<script src>`
@@ -136,7 +136,7 @@ def render_plot(plot_node, grid_result, input_specs):
 import {{ Pane }} from "{CDN_TWEAKPANE}";
 window.Tweakpane = {{ Pane }};
 {RUNTIME_JS}
-pymdInitPlot(
+mystBakerInitPlot(
   "{container_id}",
   {json.dumps(input_specs)},
   {json.dumps(grid_result)},

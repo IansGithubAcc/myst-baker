@@ -2,8 +2,8 @@
 import json
 import sys
 
-from pymd import transform
-from pymd.directives import (
+from myst_baker import transform
+from myst_baker.directives import (
     INPUT_SLIDER_DIRECTIVE,
     INPUT_CHECKBOX_DIRECTIVE,
     INPUT_DROPDOWN_DIRECTIVE,
@@ -12,7 +12,7 @@ from pymd.directives import (
 )
 
 PLUGIN_SPEC = {
-    "name": "pymd",
+    "name": "myst-baker",
     "directives": [
         INPUT_SLIDER_DIRECTIVE,
         INPUT_CHECKBOX_DIRECTIVE,
@@ -64,7 +64,7 @@ def main(argv=None):
         _write_ast_to_stdout([node])
         return
 
-    raise SystemExit(f"pymd plugin: unrecognized arguments: {argv}")
+    raise SystemExit(f"myst-baker plugin: unrecognized arguments: {argv}")
 
 
 if __name__ == "__main__":

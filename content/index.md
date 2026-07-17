@@ -1,8 +1,8 @@
-# pymd
+# myst-baker
 
-pymd is a MyST plugin for writing documentation with **live, interactive
+myst-baker is a MyST plugin for writing documentation with **live, interactive
 examples that need no server**. You author three kinds of fenced blocks —
-an input widget, a plain Python function, and a plot — and pymd runs your
+an input widget, a plain Python function, and a plot — and myst-baker runs your
 function over every possible combination of input values *at build time*.
 The result is baked into the page as a JSON lookup table: moving a slider in
 the browser is just a key lookup and a chart redraw, with no Python running
@@ -13,10 +13,10 @@ anywhere at page-view time.
 Every interactive figure in these docs is built from the same three pieces:
 
 1. **An input widget** (`input-slider`, `input-checkbox`, or
-   `input-dropdown`) — declares a named input and the values pymd should
+   `input-dropdown`) — declares a named input and the values myst-baker should
    precompute for it.
 2. **`calc`** — a normal Python function whose parameter names match
-   input names. pymd calls it once per combination of input values.
+   input names. myst-baker calls it once per combination of input values.
 3. **`plot`** — a Plotly trace (scatter, bar, histogram, pie, box, violin,
    and more), fed by one `calc` function's output.
 

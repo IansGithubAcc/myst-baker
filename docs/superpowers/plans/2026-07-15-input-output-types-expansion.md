@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add two new input directives (`input-checkbox`, `input-dropdown`) and four new supported Plotly trace types (`bar` — already works, verified as a smoke test only — `histogram`, `pie`, `box`/`violin`) to pymd's existing MyST plugin.
+**Goal:** Add two new input directives (`input-checkbox`, `input-dropdown`) and four new supported Plotly trace types (`bar` — already works, verified as a smoke test only — `histogram`, `pie`, `box`/`violin`) to myst-baker's existing MyST plugin.
 
-**Architecture:** Generalizes the single `if node_type == "pymd-input-slider"` branch in `transform.py` and the hardcoded `x: data[0], y: data[1]` in `runtime.js` into kind-dispatched equivalents. Calc-python functions gain a second accepted return shape (a dict of Plotly trace field names, spread in verbatim) alongside the existing tuple/list shape (now zipped against a small per-trace-type ordered field list, `TRACE_FIELDS`, computed once at build time in `render.py` — not in the browser).
+**Architecture:** Generalizes the single `if node_type == "myst-baker-input-slider"` branch in `transform.py` and the hardcoded `x: data[0], y: data[1]` in `runtime.js` into kind-dispatched equivalents. Calc-python functions gain a second accepted return shape (a dict of Plotly trace field names, spread in verbatim) alongside the existing tuple/list shape (now zipped against a small per-trace-type ordered field list, `TRACE_FIELDS`, computed once at build time in `render.py` — not in the browser).
 
-**Tech Stack:** Python 3.13, MyST executable plugin (`pymd-plugin`), Tweakpane v4 (client widgets, CDN), Plotly.js (client charts, CDN), pytest + pytest-playwright.
+**Tech Stack:** Python 3.13, MyST executable plugin (`myst-baker-plugin`), Tweakpane v4 (client widgets, CDN), Plotly.js (client charts, CDN), pytest + pytest-playwright.
 
 ## Global Constraints
 
@@ -20,13 +20,13 @@
 ## Task 1: `input-checkbox` and `input-dropdown` directive schemas
 
 **Files:**
-- Modify: `src/pymd/directives.py`
-- Modify: `src/pymd/plugin.py`
+- Modify: `src/myst_baker/directives.py`
+- Modify: `src/myst_baker/plugin.py`
 - Test: `tests/test_directives.py`
 - Test: `tests/test_plugin.py`
 
 **Interfaces:**
-- Produces: `INPUT_CHECKBOX_DIRECTIVE`, `INPUT_DROPDOWN_DIRECTIVE` dicts (same shape as the existing `INPUT_SLIDER_DIRECTIVE`), importable from `pymd.directives`. `KNOWN_DIRECTIVES` includes `"input-checkbox"` and `"input-dropdown"`. `build_placeholder_node("input-checkbox", ...)` produces a `{"type": "pymd-input-checkbox", ...}` node; `build_placeholder_node("input-dropdown", ...)` produces `{"type": "pymd-input-dropdown", ...}`.
+- Produces: `INPUT_CHECKBOX_DIRECTIVE`, `INPUT_DROPDOWN_DIRECTIVE` dicts (same shape as the existing `INPUT_SLIDER_DIRECTIVE`), importable from `myst_baker.directives`. `KNOWN_DIRECTIVES` includes `"input-checkbox"` and `"input-dropdown"`. `build_placeholder_node("input-checkbox", ...)` produces a `{"type": "myst-baker-input-checkbox", ...}` node; `build_placeholder_node("input-dropdown", ...)` produces `{"type": "myst-baker-input-dropdown", ...}`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -38,7 +38,7 @@ def test_build_placeholder_node_input_checkbox():
         "input-checkbox", arg="enabled", options={"value": True}, body=""
     )
     assert node == {
-        "type": "pymd-input-checkbox",
+        "type": "myst-baker-input-checkbox",
         "arg": "enabled",
         "options": {"value": True},
         "body": "",
@@ -53,7 +53,7 @@ def test_build_placeholder_node_input_dropdown():
         body="red\ngreen\nblue",
     )
     assert node == {
-        "type": "pymd-input-dropdown",
+        "type": "myst-baker-input-dropdown",
         "arg": "color",
         "options": {"value": "green"},
         "body": "red\ngreen\nblue",
@@ -85,7 +85,7 @@ Expected: the four new tests FAIL — `build_placeholder_node` raises `ValueErro
 
 - [ ] **Step 3: Add the directive schemas**
 
-In `src/pymd/directives.py`, change the top line:
+In `src/myst_baker/directives.py`, change the top line:
 
 ```python
 KNOWN_DIRECTIVES = {"input-slider", "input-checkbox", "input-dropdown", "calc-python", "plot"}
@@ -122,11 +122,11 @@ INPUT_DROPDOWN_DIRECTIVE = {
 
 - [ ] **Step 4: Register the new directives in the plugin spec**
 
-In `src/pymd/plugin.py`, change the import and `PLUGIN_SPEC`:
+In `src/myst_baker/plugin.py`, change the import and `PLUGIN_SPEC`:
 
 ```python
-from pymd import transform
-from pymd.directives import (
+from myst_baker import transform
+from myst_baker.directives import (
     INPUT_SLIDER_DIRECTIVE,
     INPUT_CHECKBOX_DIRECTIVE,
     INPUT_DROPDOWN_DIRECTIVE,
@@ -136,7 +136,7 @@ from pymd.directives import (
 )
 
 PLUGIN_SPEC = {
-    "name": "pymd",
+    "name": "myst-baker",
     "directives": [
         INPUT_SLIDER_DIRECTIVE,
         INPUT_CHECKBOX_DIRECTIVE,
@@ -156,7 +156,7 @@ Expected: all tests PASS (6 in `test_directives.py`, 2 in `test_plugin.py`).
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/pymd/directives.py src/pymd/plugin.py tests/test_directives.py tests/test_plugin.py
+git add src/myst_baker/directives.py src/myst_baker/plugin.py tests/test_directives.py tests/test_plugin.py
 git commit -m "feat: add input-checkbox and input-dropdown directive schemas"
 ```
 
@@ -167,13 +167,13 @@ git commit -m "feat: add input-checkbox and input-dropdown directive schemas"
 This is one task because the two files share a contract (the shape of the `inputs` dict) that must change atomically for the test suite to stay green between commits.
 
 **Files:**
-- Modify: `src/pymd/precompute.py`
-- Modify: `src/pymd/transform.py`
+- Modify: `src/myst_baker/precompute.py`
+- Modify: `src/myst_baker/transform.py`
 - Test: `tests/test_precompute.py` (full rewrite of input-shape fixtures)
 - Test: `tests/test_transform.py` (two new tests appended)
 
 **Interfaces:**
-- Consumes: `INPUT_CHECKBOX_DIRECTIVE`/`INPUT_DROPDOWN_DIRECTIVE` node types (`pymd-input-checkbox`, `pymd-input-dropdown`) from Task 1.
+- Consumes: `INPUT_CHECKBOX_DIRECTIVE`/`INPUT_DROPDOWN_DIRECTIVE` node types (`myst-baker-input-checkbox`, `myst-baker-input-dropdown`) from Task 1.
 - Produces: `precompute.values_for_input(spec)` — `spec` is `{"kind": "slider", "min", "max", "step"}` | `{"kind": "checkbox"}` | `{"kind": "dropdown", "choices": [...]}`, returns the list of values for that input. `precompute.matched_inputs(func, inputs)` now takes `inputs` as `{name: spec}` (kind-tagged dicts) instead of bare `(min, max, step)` tuples — same return shape as before (`[(name, values), ...]`). `transform.py`'s per-plot `input_specs` list now includes a `"kind"` key per entry, consumed by `runtime.js` in Task 3.
 
 - [ ] **Step 1: Write the failing precompute tests (full file rewrite)**
@@ -183,7 +183,7 @@ Replace `tests/test_precompute.py` entirely with:
 ```python
 import pytest
 
-from pymd.precompute import (
+from myst_baker.precompute import (
     input_values,
     values_for_input,
     matched_inputs,
@@ -320,7 +320,7 @@ Expected: FAIL — `ImportError: cannot import name 'values_for_input'`, plus ev
 
 - [ ] **Step 3: Rewrite `precompute.py`'s input-value logic**
 
-In `src/pymd/precompute.py`, keep `input_values` unchanged. Replace `_stringify` and `matched_inputs` with:
+In `src/myst_baker/precompute.py`, keep `input_values` unchanged. Replace `_stringify` and `matched_inputs` with:
 
 ```python
 def values_for_input(spec):
@@ -373,19 +373,19 @@ Add to `tests/test_transform.py` (after the existing tests, same file):
 ```python
 def test_transform_document_supports_checkbox_input():
     input_node = {
-        "type": "pymd-input-checkbox",
+        "type": "myst-baker-input-checkbox",
         "arg": "enabled",
         "options": {"value": True},
         "body": "",
     }
     calc_node = {
-        "type": "pymd-calc-python",
+        "type": "myst-baker-calc-python",
         "arg": None,
         "options": {},
         "body": "def get_plot_data(enabled):\n    return int(enabled) * 2\n",
     }
     plot_node = {
-        "type": "pymd-plot",
+        "type": "myst-baker-plot",
         "arg": "scatter",
         "options": {"data": "get_plot_data"},
         "body": "",
@@ -401,19 +401,19 @@ def test_transform_document_supports_checkbox_input():
 
 def test_transform_document_supports_dropdown_input():
     input_node = {
-        "type": "pymd-input-dropdown",
+        "type": "myst-baker-input-dropdown",
         "arg": "color",
         "options": {},
         "body": "red\ngreen\nblue",
     }
     calc_node = {
-        "type": "pymd-calc-python",
+        "type": "myst-baker-calc-python",
         "arg": None,
         "options": {},
         "body": "def get_plot_data(color):\n    return len(color)\n",
     }
     plot_node = {
-        "type": "pymd-plot",
+        "type": "myst-baker-plot",
         "arg": "scatter",
         "options": {"data": "get_plot_data"},
         "body": "",
@@ -431,11 +431,11 @@ def test_transform_document_supports_dropdown_input():
 - [ ] **Step 6: Run transform tests to verify the new ones fail**
 
 Run: `uv run pytest tests/test_transform.py -v`
-Expected: the two new tests FAIL with a `KeyError` (`_collect_nodes` doesn't yet recognize `pymd-input-checkbox`/`pymd-input-dropdown`, so `inputs` never gets an entry for `enabled`/`color`, and `precompute.matched_inputs` raises `ValueError: ... has parameter 'enabled' with no matching input block`). The 4 pre-existing tests in this file still PASS (Task 2 hasn't touched their behavior yet).
+Expected: the two new tests FAIL with a `KeyError` (`_collect_nodes` doesn't yet recognize `myst-baker-input-checkbox`/`myst-baker-input-dropdown`, so `inputs` never gets an entry for `enabled`/`color`, and `precompute.matched_inputs` raises `ValueError: ... has parameter 'enabled' with no matching input block`). The 4 pre-existing tests in this file still PASS (Task 2 hasn't touched their behavior yet).
 
 - [ ] **Step 7: Generalize `transform.py`'s node collection and client input-specs**
 
-In `src/pymd/transform.py`, add these helpers directly after the `_iter_nodes` function (before `_collect_nodes`):
+In `src/myst_baker/transform.py`, add these helpers directly after the `_iter_nodes` function (before `_collect_nodes`):
 
 ```python
 def _dropdown_choices(body):
@@ -456,9 +456,9 @@ def _dropdown_precompute_spec(node):
 
 
 _INPUT_PRECOMPUTE_SPECS = {
-    "pymd-input-slider": _slider_precompute_spec,
-    "pymd-input-checkbox": _checkbox_precompute_spec,
-    "pymd-input-dropdown": _dropdown_precompute_spec,
+    "myst-baker-input-slider": _slider_precompute_spec,
+    "myst-baker-input-checkbox": _checkbox_precompute_spec,
+    "myst-baker-input-dropdown": _dropdown_precompute_spec,
 }
 
 
@@ -485,9 +485,9 @@ def _dropdown_client_spec(name, node):
 
 
 _INPUT_CLIENT_SPECS = {
-    "pymd-input-slider": _slider_client_spec,
-    "pymd-input-checkbox": _checkbox_client_spec,
-    "pymd-input-dropdown": _dropdown_client_spec,
+    "myst-baker-input-slider": _slider_client_spec,
+    "myst-baker-input-checkbox": _checkbox_client_spec,
+    "myst-baker-input-dropdown": _dropdown_client_spec,
 }
 ```
 
@@ -505,7 +505,7 @@ def _collect_nodes(ast):
             name = node["arg"]
             inputs[name] = _INPUT_PRECOMPUTE_SPECS[node_type](node)
             input_nodes[name] = node
-        elif node_type == "pymd-calc-python":
+        elif node_type == "myst-baker-calc-python":
             exec(node["body"], calc_namespace)
 
     return inputs, input_nodes, calc_namespace
@@ -534,7 +534,7 @@ Expected: all tests PASS (Playwright e2e tests are excluded here since they requ
 - [ ] **Step 10: Commit**
 
 ```bash
-git add src/pymd/precompute.py src/pymd/transform.py tests/test_precompute.py tests/test_transform.py
+git add src/myst_baker/precompute.py src/myst_baker/transform.py tests/test_precompute.py tests/test_transform.py
 git commit -m "feat: generalize input pipeline for checkbox and dropdown kinds"
 ```
 
@@ -543,17 +543,17 @@ git commit -m "feat: generalize input pipeline for checkbox and dropdown kinds"
 ## Task 3: Kind-aware Tweakpane bindings in `runtime.js`
 
 **Files:**
-- Modify: `src/pymd/static/runtime.js`
+- Modify: `src/myst_baker/static/runtime.js`
 
 **Interfaces:**
 - Consumes: `inputSpecs` entries now carry `spec.kind` (`"slider" | "checkbox" | "dropdown"`) and, for dropdown, `spec.choices` — produced by Task 2's `_INPUT_CLIENT_SPECS`.
-- Produces: no change to `pymdInitPlot`'s exported call signature; `draw()` is untouched in this task (still the old hardcoded `x: data[0], y: data[1]` — that becomes generic in Task 5).
+- Produces: no change to `mystBakerInitPlot`'s exported call signature; `draw()` is untouched in this task (still the old hardcoded `x: data[0], y: data[1]` — that becomes generic in Task 5).
 
 This is a pure client-side JS change with no Python test harness; it can't be unit-tested via pytest. Its correctness is verified in Task 7's Playwright e2e test, once Task 4 gives it real content to render against. Do not claim this task works until Task 7 passes.
 
 - [ ] **Step 1: Update the Tweakpane binding loop**
 
-In `src/pymd/static/runtime.js`, replace the `inputSpecs.forEach((spec) => { pane.addBinding(...) })` block with:
+In `src/myst_baker/static/runtime.js`, replace the `inputSpecs.forEach((spec) => { pane.addBinding(...) })` block with:
 
 ```javascript
   inputSpecs.forEach((spec) => {
@@ -577,13 +577,13 @@ In `src/pymd/static/runtime.js`, replace the `inputSpecs.forEach((spec) => { pan
 
 - [ ] **Step 2: Sanity-check the file parses**
 
-Run: `node --check src/pymd/static/runtime.js`
+Run: `node --check src/myst_baker/static/runtime.js`
 Expected: no output, exit code 0 (syntax is valid; this does not execute the code, only parses it).
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add src/pymd/static/runtime.js
+git add src/myst_baker/static/runtime.js
 git commit -m "feat: bind checkbox and dropdown inputs to their own Tweakpane widgets"
 ```
 
@@ -605,7 +605,7 @@ Add to the end of `content/inputs.md`:
 ## Checkbox
 
 An `input-checkbox`'s argument is the name other blocks refer to it by, same
-as `input-slider`. Its `:value:` option sets the initial state; pymd always
+as `input-slider`. Its `:value:` option sets the initial state; myst-baker always
 precomputes both `true` and `false`, regardless of which one a page starts
 on.
 
@@ -658,7 +658,7 @@ Add directly after the Checkbox section:
 ## Dropdown
 
 An `input-dropdown`'s choices come from its body, one per line. Its
-`:value:` option picks which one is initially selected — omit it and pymd
+`:value:` option picks which one is initially selected — omit it and myst-baker
 uses the first line. Every choice becomes one column of the precomputed
 grid, so a three-choice dropdown is exactly as cheap as a three-step
 slider.
@@ -737,8 +737,8 @@ git commit -m "docs: add checkbox and dropdown worked examples"
 ## Task 5: `TRACE_FIELDS` normalization in `render.py`, simplified `draw()`
 
 **Files:**
-- Modify: `src/pymd/render.py`
-- Modify: `src/pymd/static/runtime.js`
+- Modify: `src/myst_baker/render.py`
+- Modify: `src/myst_baker/static/runtime.js`
 - Test: `tests/test_render.py` (new file)
 - Modify: `tests/test_transform.py` (fix scatter-plot fixtures broken by the shape change)
 
@@ -755,7 +755,7 @@ Create `tests/test_render.py`:
 ```python
 import pytest
 
-from pymd.render import _trace_data, TRACE_FIELDS
+from myst_baker.render import _trace_data, TRACE_FIELDS
 
 
 def test_trace_data_passes_dict_through_unchanged():
@@ -791,11 +791,11 @@ def test_trace_data_raises_for_unknown_trace_type_without_dict():
 - [ ] **Step 2: Run render tests to verify they fail**
 
 Run: `uv run pytest tests/test_render.py -v`
-Expected: FAIL — `ImportError: cannot import name '_trace_data' from 'pymd.render'`.
+Expected: FAIL — `ImportError: cannot import name '_trace_data' from 'myst_baker.render'`.
 
 - [ ] **Step 3: Add `TRACE_FIELDS`/`_trace_data` and apply them in `render_plot`**
 
-In `src/pymd/render.py`, add this directly after the `RUNTIME_JS = _f.read()` line and before `def render_plot`:
+In `src/myst_baker/render.py`, add this directly after the `RUNTIME_JS = _f.read()` line and before `def render_plot`:
 
 ```python
 TRACE_FIELDS = {
@@ -835,7 +835,7 @@ Expected: all 7 tests PASS.
 
 - [ ] **Step 5: Simplify `runtime.js`'s `draw()`**
 
-In `src/pymd/static/runtime.js`, replace the `draw()` function body:
+In `src/myst_baker/static/runtime.js`, replace the `draw()` function body:
 
 ```javascript
   function draw() {
@@ -845,7 +845,7 @@ In `src/pymd/static/runtime.js`, replace the `draw()` function body:
   }
 ```
 
-Run: `node --check src/pymd/static/runtime.js`
+Run: `node --check src/myst_baker/static/runtime.js`
 Expected: no output, exit code 0.
 
 - [ ] **Step 6: Fix the now-broken scatter fixtures in `tests/test_transform.py`**
@@ -857,7 +857,7 @@ In `test_transform_document_replaces_plot_node_with_html`, change the calc body 
 
 ```python
     calc_node = {
-        "type": "pymd-calc-python",
+        "type": "myst-baker-calc-python",
         "arg": None,
         "options": {},
         "body": "def get_plot_data(a):\n    return a, a * 2\n",
@@ -876,7 +876,7 @@ In `test_transform_document_orders_input_specs_by_function_parameter_order`, cha
 
 ```python
     calc_node = {
-        "type": "pymd-calc-python",
+        "type": "myst-baker-calc-python",
         "arg": None,
         "options": {},
         "body": "def f(a, b):\n    return a, b\n",
@@ -887,7 +887,7 @@ In `test_transform_document_supports_checkbox_input`, change the calc body and a
 
 ```python
     calc_node = {
-        "type": "pymd-calc-python",
+        "type": "myst-baker-calc-python",
         "arg": None,
         "options": {},
         "body": "def get_plot_data(enabled):\n    return enabled, int(enabled) * 2\n",
@@ -903,7 +903,7 @@ In `test_transform_document_supports_dropdown_input`, change the calc body and a
 
 ```python
     calc_node = {
-        "type": "pymd-calc-python",
+        "type": "myst-baker-calc-python",
         "arg": None,
         "options": {},
         "body": "def get_plot_data(color):\n    return color, len(color)\n",
@@ -929,7 +929,7 @@ Expected: `📚 Built 5 pages for project` with no errors (this proves the exist
 - [ ] **Step 9: Commit**
 
 ```bash
-git add src/pymd/render.py src/pymd/static/runtime.js tests/test_render.py tests/test_transform.py
+git add src/myst_baker/render.py src/myst_baker/static/runtime.js tests/test_render.py tests/test_transform.py
 git commit -m "feat: normalize plot trace data via TRACE_FIELDS, supporting non-x/y trace types"
 ```
 
@@ -952,7 +952,7 @@ Add to the end of `content/outputs.md`:
 
 A `histogram` trace only needs one array — samples on `x`. A calc function
 feeding a histogram should return a single-element tuple, `(x,)`, not a
-bare list, so pymd can tell "one array" apart from "one array meant to be
+bare list, so myst-baker can tell "one array" apart from "one array meant to be
 unpacked positionally."
 
 ````md

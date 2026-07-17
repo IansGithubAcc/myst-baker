@@ -4,7 +4,7 @@
 
 **Goal:** Replace the `{calc-python}` MyST directive with a plain-code-fence convention, `python{calc}`, so calc blocks get real IDE Python syntax highlighting while behaving identically at build time.
 
-**Architecture:** `calc-python` currently is a real MyST directive (`{calc-python}`), which mystmd's parser only recognizes when the fence's info string starts with `{`, which blocks editors from ever recognizing it as Python. Since calc blocks declare no `:key: value` options and their source is never rendered to the reader, MyST's directive machinery isn't actually needed for them — mystmd will already produce a plain mdast `code` node for a fence like `` ```python{calc} `` (real `python` language token, so editors highlight it), and pymd's own document-transform (which already walks the whole page AST for every `pymd-*` node) can recognize that `code` node itself, purely as a Python-side convention, instead of relying on mystmd's directive dispatch.
+**Architecture:** `calc-python` currently is a real MyST directive (`{calc-python}`), which mystmd's parser only recognizes when the fence's info string starts with `{`, which blocks editors from ever recognizing it as Python. Since calc blocks declare no `:key: value` options and their source is never rendered to the reader, MyST's directive machinery isn't actually needed for them — mystmd will already produce a plain mdast `code` node for a fence like `` ```python{calc} `` (real `python` language token, so editors highlight it), and myst-baker's own document-transform (which already walks the whole page AST for every `myst-baker-*` node) can recognize that `code` node itself, purely as a Python-side convention, instead of relying on mystmd's directive dispatch.
 
 **Tech Stack:** Python 3, mystmd (JS, invoked as a subprocess via `myst build`), pytest.
 
@@ -13,21 +13,21 @@
 - No back-compat shim for the old `` ```{calc-python} `` fence form — every existing occurrence in code and docs is rewritten, not dual-supported.
 - Only `python` is a supported calc-block language; any other language prefix (e.g. `r{calc}`) must fail the build loudly with a clear error, not silently mis-execute.
 - `input-slider`, `input-checkbox`, `input-dropdown`, and `plot` are unaffected — they remain real MyST directives and are out of scope for every task below.
-- mdast's `code` node uses `value` for its body text (not `body` — that field name is specific to pymd's own directive placeholder nodes, which `code` nodes are not).
+- mdast's `code` node uses `value` for its body text (not `body` — that field name is specific to myst-baker's own directive placeholder nodes, which `code` nodes are not).
 
 ---
 
 ### Task 1: Remove `calc-python` as a MyST directive
 
 **Files:**
-- Modify: `src/pymd/directives.py`
-- Modify: `src/pymd/plugin.py`
+- Modify: `src/myst_baker/directives.py`
+- Modify: `src/myst_baker/plugin.py`
 - Test: `tests/test_directives.py`
 - Test: `tests/test_plugin.py`
 
 **Interfaces:**
 - Consumes: nothing new.
-- Produces: `KNOWN_DIRECTIVES` (in `src/pymd/directives.py`) no longer contains `"calc-python"`; `build_placeholder_node("calc-python", ...)` now raises `ValueError` like any other unrecognized directive name. `PLUGIN_SPEC["directives"]` (in `src/pymd/plugin.py`) no longer lists a calc directive. Task 2 does not depend on anything produced here beyond these two facts.
+- Produces: `KNOWN_DIRECTIVES` (in `src/myst_baker/directives.py`) no longer contains `"calc-python"`; `build_placeholder_node("calc-python", ...)` now raises `ValueError` like any other unrecognized directive name. `PLUGIN_SPEC["directives"]` (in `src/myst_baker/plugin.py`) no longer lists a calc directive. Task 2 does not depend on anything produced here beyond these two facts.
 
 - [ ] **Step 1: Update the two tests to expect `calc-python` is no longer a known directive**
 
@@ -38,7 +38,7 @@
       source = "def f(a):\n    return a\n"
       node = build_placeholder_node("calc-python", arg=None, options={}, body=source)
       assert node == {
-          "type": "pymd-calc-python",
+          "type": "myst-baker-calc-python",
           "arg": None,
           "options": {},
           "body": source,
@@ -93,9 +93,9 @@
 - [ ] **Step 2: Run tests to verify these two fail**
 
   Run: `uv run pytest tests/test_directives.py tests/test_plugin.py -v`
-  Expected: `test_build_placeholder_node_rejects_calc_python_as_directive` FAILS (current code still builds a `pymd-calc-python` node instead of raising), and `test_plugin_spec_lists_all_directives` FAILS (current spec still includes `"calc-python"`).
+  Expected: `test_build_placeholder_node_rejects_calc_python_as_directive` FAILS (current code still builds a `myst-baker-calc-python` node instead of raising), and `test_plugin_spec_lists_all_directives` FAILS (current spec still includes `"calc-python"`).
 
-- [ ] **Step 3: Remove `CALC_PYTHON_DIRECTIVE` from `src/pymd/directives.py`**
+- [ ] **Step 3: Remove `CALC_PYTHON_DIRECTIVE` from `src/myst_baker/directives.py`**
 
   Change the `KNOWN_DIRECTIVES` line from:
 
@@ -119,12 +119,12 @@
   }
   ```
 
-- [ ] **Step 4: Remove `CALC_PYTHON_DIRECTIVE` from `src/pymd/plugin.py`**
+- [ ] **Step 4: Remove `CALC_PYTHON_DIRECTIVE` from `src/myst_baker/plugin.py`**
 
   Change the import block from:
 
   ```python
-  from pymd.directives import (
+  from myst_baker.directives import (
       INPUT_SLIDER_DIRECTIVE,
       INPUT_CHECKBOX_DIRECTIVE,
       INPUT_DROPDOWN_DIRECTIVE,
@@ -137,7 +137,7 @@
   to:
 
   ```python
-  from pymd.directives import (
+  from myst_baker.directives import (
       INPUT_SLIDER_DIRECTIVE,
       INPUT_CHECKBOX_DIRECTIVE,
       INPUT_DROPDOWN_DIRECTIVE,
@@ -150,7 +150,7 @@
 
   ```python
   PLUGIN_SPEC = {
-      "name": "pymd",
+      "name": "myst-baker",
       "directives": [
           INPUT_SLIDER_DIRECTIVE,
           INPUT_CHECKBOX_DIRECTIVE,
@@ -166,7 +166,7 @@
 
   ```python
   PLUGIN_SPEC = {
-      "name": "pymd",
+      "name": "myst-baker",
       "directives": [
           INPUT_SLIDER_DIRECTIVE,
           INPUT_CHECKBOX_DIRECTIVE,
@@ -180,12 +180,12 @@
 - [ ] **Step 5: Run the full test suite to verify everything (still) passes**
 
   Run: `uv run pytest tests/test_directives.py tests/test_plugin.py tests/test_transform.py -v`
-  Expected: all PASS. (`tests/test_transform.py` still builds `pymd-calc-python` nodes by hand and doesn't go through `build_placeholder_node`/`PLUGIN_SPEC`, so it's unaffected by this task — Task 2 changes it.)
+  Expected: all PASS. (`tests/test_transform.py` still builds `myst-baker-calc-python` nodes by hand and doesn't go through `build_placeholder_node`/`PLUGIN_SPEC`, so it's unaffected by this task — Task 2 changes it.)
 
 - [ ] **Step 6: Commit**
 
   ```bash
-  git add src/pymd/directives.py src/pymd/plugin.py tests/test_directives.py tests/test_plugin.py
+  git add src/myst_baker/directives.py src/myst_baker/plugin.py tests/test_directives.py tests/test_plugin.py
   git commit -m "refactor: remove calc-python as a MyST directive"
   ```
 
@@ -194,7 +194,7 @@
 ### Task 2: Recognize `python{calc}` plain code fences in the document transform
 
 **Files:**
-- Modify: `src/pymd/transform.py`
+- Modify: `src/myst_baker/transform.py`
 - Test: `tests/test_transform.py`
 
 **Interfaces:**
@@ -211,7 +211,7 @@
 
   import pytest
 
-  from pymd.transform import transform_document
+  from myst_baker.transform import transform_document
 
 
   def _decode_iframe_html(iframe_node):
@@ -235,14 +235,14 @@
 
   def test_transform_document_replaces_plot_node_with_html():
       input_node = {
-          "type": "pymd-input-slider",
+          "type": "myst-baker-input-slider",
           "arg": "a",
           "options": {"value": 1, "min": 0, "max": 2, "step": 1},
           "body": "",
       }
       calc_node = _calc_node("def get_plot_data(a):\n    return a, a * 2\n")
       plot_node = {
-          "type": "pymd-plot",
+          "type": "myst-baker-plot",
           "arg": "scatter",
           "options": {"data": "get_plot_data"},
           "body": "",
@@ -251,11 +251,11 @@
       result = transform_document(_page_ast(input_node, calc_node, plot_node))
 
       children_types = [child["type"] for child in result["children"]]
-      assert children_types == ["pymd-input-slider", "code", "iframe"]
+      assert children_types == ["myst-baker-input-slider", "code", "iframe"]
 
       iframe_node = result["children"][2]
       html = _decode_iframe_html(iframe_node)
-      assert "pymdInitPlot(" in html
+      assert "mystBakerInitPlot(" in html
       assert '"0": {"x": 0, "y": 0}' in html
       assert '"1": {"x": 1, "y": 2}' in html
       assert '"2": {"x": 2, "y": 4}' in html
@@ -263,14 +263,14 @@
 
   def test_transform_document_raises_when_plot_references_unknown_function():
       input_node = {
-          "type": "pymd-input-slider",
+          "type": "myst-baker-input-slider",
           "arg": "a",
           "options": {"value": 1, "min": 0, "max": 1, "step": 1},
           "body": "",
       }
       calc_node = _calc_node("def get_plot_data(a):\n    return a\n")
       plot_node = {
-          "type": "pymd-plot",
+          "type": "myst-baker-plot",
           "arg": "scatter",
           "options": {"data": "does_not_exist"},
           "body": "",
@@ -285,22 +285,22 @@
       # top-level page content directly under the document root's `children`.
       # Instead it wraps it in an intermediate `{"type": "block", "children":
       # [...]}` node (verified against a real `myst build --debug`), so the
-      # actual shape is root -> block -> [pymd-* nodes], not root -> [pymd-*
+      # actual shape is root -> block -> [myst-baker-* nodes], not root -> [myst-baker-*
       # nodes] directly as every other test in this file constructs it. A
       # scanner that only looks at `ast["children"]` (or otherwise fails to
       # recurse into nested `children`) finds nothing here and silently leaves
-      # the pymd-plot node untransformed -- exactly the bug fixed in
+      # the myst-baker-plot node untransformed -- exactly the bug fixed in
       # transform.py's `_iter_nodes`/`_replace_plots`. This test must fail if
       # that recursion is ever reverted to shallow/immediate-children scanning.
       input_node = {
-          "type": "pymd-input-slider",
+          "type": "myst-baker-input-slider",
           "arg": "a",
           "options": {"value": 1, "min": 0, "max": 2, "step": 1},
           "body": "",
       }
       calc_node = _calc_node("def get_plot_data(a):\n    return a, a * 2\n")
       plot_node = {
-          "type": "pymd-plot",
+          "type": "myst-baker-plot",
           "arg": "scatter",
           "options": {"data": "get_plot_data"},
           "body": "",
@@ -321,11 +321,11 @@
       # and replaced with an iframe node, in place.
       assert result["children"][0]["type"] == "block"
       inner_children_types = [child["type"] for child in result["children"][0]["children"]]
-      assert inner_children_types == ["pymd-input-slider", "code", "iframe"]
+      assert inner_children_types == ["myst-baker-input-slider", "code", "iframe"]
 
       iframe_node = result["children"][0]["children"][2]
       html = _decode_iframe_html(iframe_node)
-      assert "pymdInitPlot(" in html
+      assert "mystBakerInitPlot(" in html
       assert '"0": {"x": 0, "y": 0}' in html
       assert '"1": {"x": 1, "y": 2}' in html
       assert '"2": {"x": 2, "y": 4}' in html
@@ -340,20 +340,20 @@
       # client's lookup key built from input_specs won't match the
       # precomputed grid's keys.
       input_node_b = {
-          "type": "pymd-input-slider",
+          "type": "myst-baker-input-slider",
           "arg": "b",
           "options": {"value": 1, "min": 0, "max": 1, "step": 1},
           "body": "",
       }
       input_node_a = {
-          "type": "pymd-input-slider",
+          "type": "myst-baker-input-slider",
           "arg": "a",
           "options": {"value": 1, "min": 0, "max": 1, "step": 1},
           "body": "",
       }
       calc_node = _calc_node("def f(a, b):\n    return a, b\n")
       plot_node = {
-          "type": "pymd-plot",
+          "type": "myst-baker-plot",
           "arg": "scatter",
           "options": {"data": "f"},
           "body": "",
@@ -368,9 +368,9 @@
 
       html = _decode_iframe_html(result["children"][-1])
 
-      # runtime.js (embedded above) *defines* pymdInitPlot, so find the last
+      # runtime.js (embedded above) *defines* mystBakerInitPlot, so find the last
       # occurrence -- the actual invocation with the real arguments.
-      call_index = html.rindex("pymdInitPlot(")
+      call_index = html.rindex("mystBakerInitPlot(")
       array_start = html.index("[", call_index)
       input_specs, _ = json.JSONDecoder().raw_decode(html, array_start)
 
@@ -379,14 +379,14 @@
 
   def test_transform_document_supports_checkbox_input():
       input_node = {
-          "type": "pymd-input-checkbox",
+          "type": "myst-baker-input-checkbox",
           "arg": "enabled",
           "options": {"value": True},
           "body": "",
       }
       calc_node = _calc_node("def get_plot_data(enabled):\n    return enabled, int(enabled) * 2\n")
       plot_node = {
-          "type": "pymd-plot",
+          "type": "myst-baker-plot",
           "arg": "scatter",
           "options": {"data": "get_plot_data"},
           "body": "",
@@ -402,14 +402,14 @@
 
   def test_transform_document_supports_dropdown_input():
       input_node = {
-          "type": "pymd-input-dropdown",
+          "type": "myst-baker-input-dropdown",
           "arg": "color",
           "options": {},
           "body": "red\ngreen\nblue",
       }
       calc_node = _calc_node("def get_plot_data(color):\n    return color, len(color)\n")
       plot_node = {
-          "type": "pymd-plot",
+          "type": "myst-baker-plot",
           "arg": "scatter",
           "options": {"data": "get_plot_data"},
           "body": "",
@@ -426,14 +426,14 @@
 
   def test_transform_document_raises_for_non_python_calc_language():
       input_node = {
-          "type": "pymd-input-slider",
+          "type": "myst-baker-input-slider",
           "arg": "a",
           "options": {"value": 1, "min": 0, "max": 1, "step": 1},
           "body": "",
       }
       calc_node = {"type": "code", "lang": "r{calc}", "value": "f <- function(a) a\n"}
       plot_node = {
-          "type": "pymd-plot",
+          "type": "myst-baker-plot",
           "arg": "scatter",
           "options": {"data": "f"},
           "body": "",
@@ -450,7 +450,7 @@
       # body below would raise if it were ever exec'd, so this test fails
       # loudly if that ever regresses.
       input_node = {
-          "type": "pymd-input-slider",
+          "type": "myst-baker-input-slider",
           "arg": "a",
           "options": {"value": 1, "min": 0, "max": 1, "step": 1},
           "body": "",
@@ -462,7 +462,7 @@
       }
       calc_node = _calc_node("def f(a):\n    return a, a\n")
       plot_node = {
-          "type": "pymd-plot",
+          "type": "myst-baker-plot",
           "arg": "scatter",
           "options": {"data": "f"},
           "body": "",
@@ -481,9 +481,9 @@
 - [ ] **Step 2: Run tests to verify the expected failures**
 
   Run: `uv run pytest tests/test_transform.py -v`
-  Expected: every test FAILS. The renamed calc fixtures (`type: "code", lang: "python{calc}"`) aren't recognized by the current `_collect_nodes` (which only checks for `node_type == "pymd-calc-python"`), so no function ever gets defined and every plot lookup raises `NameError` for the target function name — including in tests that expect a *different* error or no error at all. The two brand-new tests also fail (`test_transform_document_raises_for_non_python_calc_language` gets no `ValueError` at all; `test_transform_document_ignores_plain_python_code_fence` fails with a `NameError` for `f`, not because the plain fence ran, but because the real calc fence isn't recognized either yet).
+  Expected: every test FAILS. The renamed calc fixtures (`type: "code", lang: "python{calc}"`) aren't recognized by the current `_collect_nodes` (which only checks for `node_type == "myst-baker-calc-python"`), so no function ever gets defined and every plot lookup raises `NameError` for the target function name — including in tests that expect a *different* error or no error at all. The two brand-new tests also fail (`test_transform_document_raises_for_non_python_calc_language` gets no `ValueError` at all; `test_transform_document_ignores_plain_python_code_fence` fails with a `NameError` for `f`, not because the plain fence ran, but because the real calc fence isn't recognized either yet).
 
-- [ ] **Step 3: Implement recognition in `src/pymd/transform.py`**
+- [ ] **Step 3: Implement recognition in `src/myst_baker/transform.py`**
 
   Add near the top of the file (after the existing imports):
 
@@ -498,7 +498,7 @@
   import inspect
   import re
 
-  from pymd import precompute, render
+  from myst_baker import precompute, render
   ```
 
   Add this helper right before `_collect_nodes`:
@@ -537,7 +537,7 @@
               name = node["arg"]
               inputs[name] = _INPUT_PRECOMPUTE_SPECS[node_type](node)
               input_nodes[name] = node
-          elif node_type == "pymd-calc-python":
+          elif node_type == "myst-baker-calc-python":
               exec(node["body"], calc_namespace)
 
       return inputs, input_nodes, calc_namespace
@@ -583,7 +583,7 @@
 - [ ] **Step 6: Commit**
 
   ```bash
-  git add src/pymd/transform.py tests/test_transform.py
+  git add src/myst_baker/transform.py tests/test_transform.py
   git commit -m "feat: recognize python{calc} plain code fences as calc blocks"
   ```
 
@@ -621,7 +621,7 @@
 - [ ] **Step 3: Build the real site with mystmd**
 
   Run: `uv run myst build --html`
-  Expected: build succeeds with no errors. This is the real proof that mystmd still parses `` ```python{calc} `` fences as plain code blocks and that pymd's document-transform (Task 2) still finds and executes them — every page under `content/` (`index.md`, `calculations.md`, `inputs.md`, `outputs.md`, `gallery.md`) exercises at least one calc block feeding a `plot` block, so a build failure here means a fence was missed or malformed by Step 1's substitution.
+  Expected: build succeeds with no errors. This is the real proof that mystmd still parses `` ```python{calc} `` fences as plain code blocks and that myst-baker's document-transform (Task 2) still finds and executes them — every page under `content/` (`index.md`, `calculations.md`, `inputs.md`, `outputs.md`, `gallery.md`) exercises at least one calc block feeding a `plot` block, so a build failure here means a fence was missed or malformed by Step 1's substitution.
 
 - [ ] **Step 4: Run the full test suite**
 

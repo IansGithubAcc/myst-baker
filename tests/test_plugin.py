@@ -1,7 +1,7 @@
 import io
 import json
 
-from pymd import plugin
+from myst_baker import plugin
 
 
 def _run_directive(directive_name, payload, monkeypatch):
@@ -26,7 +26,7 @@ def test_directive_dispatch_writes_json_array_not_bare_object(monkeypatch):
     assert isinstance(parsed, list)
     assert parsed == [
         {
-            "type": "pymd-input-slider",
+            "type": "myst-baker-input-slider",
             "arg": "a",
             "options": {"value": 5, "min": 0, "max": 10, "step": 1},
             "body": "",

@@ -3,7 +3,7 @@ import itertools
 import os
 
 DEFAULT_MAX_GRID_SIZE = 10_000
-MAX_GRID_SIZE_ENV_VAR = "PYMD_MAX_GRID_SIZE"
+MAX_GRID_SIZE_ENV_VAR = "MYST_BAKER_MAX_GRID_SIZE"
 
 
 class GridTooLargeError(Exception):

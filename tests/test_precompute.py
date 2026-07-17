@@ -1,6 +1,6 @@
 import pytest
 
-from pymd.precompute import (
+from myst_baker.precompute import (
     input_values,
     values_for_input,
     matched_inputs,
