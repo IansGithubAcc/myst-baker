@@ -8,9 +8,8 @@ find it, and your project's `myst.yml` needs an `executable` plugin entry
 pointing at the installed console script.
 
 ```{warning}
-myst-baker isn't published to PyPI yet. Until it is, install it from source
-(a local checkout or a git URL) rather than `pip install myst-baker` /
-`uv add myst-baker`.
+myst-baker isn't published to PyPI yet. Until it is, install it from its git
+URL rather than `pip install myst-baker` / `uv add myst-baker`.
 ```
 
 ## Add myst-baker to your own MyST project
@@ -21,22 +20,10 @@ myst-baker isn't published to PyPI yet. Until it is, install it from source
    uv add git+https://github.com/IansGithubAcc/myst-baker
    ```
 
-   Or, from a local checkout:
-
-   ```
-   uv add /path/to/myst-baker
-   ```
-
    With `pip` instead:
 
    ```
    pip install git+https://github.com/IansGithubAcc/myst-baker
-   ```
-
-   Or, from a local checkout:
-
-   ```
-   pip install /path/to/myst-baker
    ```
 
 2. Point your project's `myst.yml` at the installed console script.
