@@ -2,22 +2,27 @@
 version: 1
 project:
   id: d58eaa1c-67af-451e-b63f-5caaa2041a78
-  # title:
-  # description:
-  # keywords: []
-  # authors: []
-  # github:
+  title: myst-baker
+  description: Precomputed interactive docs via a MyST executable plugin
+  authors:
+    - name: Ian Mullens
+  github: https://github.com/IansGithubAcc/myst-baker
   toc:
-    - file: content/index.md
+    - file: docs/index.md
+    - file: docs/installation.md
     - title: Guide
       children:
-        - file: content/inputs.md
-        - file: content/calculations.md
-        - file: content/outputs.md
-        - file: content/gallery.md
+        - file: docs/guide/inputs.md
+        - file: docs/guide/calculations.md
+        - file: docs/guide/outputs.md
+    - title: Examples
+      children:
+        - file: docs/examples/gallery.md
+    - file: docs/changelog.md
+    - file: docs/authors.md
   plugins:
     - type: executable
-      # Generated directly by `uv sync` (see README.md "Setup"). MyST resolves this as a
+      # Generated directly by `uv sync` (see docs/installation.md). MyST resolves this as a
       # literal path, not a PATH search, so it must match where uv puts the launcher.
       # Windows path shown below; on Linux/Mac use .venv/bin/myst-baker-plugin instead.
       path: .venv/Scripts/myst-baker-plugin.exe

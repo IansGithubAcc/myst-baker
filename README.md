@@ -2,21 +2,19 @@
 
 Precomputed interactive docs via a MyST executable plugin.
 
-## Setup
+myst-baker lets you author live, interactive examples that need no server:
+you write an input widget, a plain Python function, and a plot, and
+myst-baker runs your function over every combination of input values at
+*build* time. The result is baked into the page as a JSON lookup table —
+moving a slider in the browser is just a key lookup and a chart redraw, with
+no Python running anywhere at page-view time.
 
-```
-uv sync
-```
+## Documentation
 
-`uv sync` installs the `myst-baker-plugin` console_scripts entry point, and `myst.yml` references
-that file directly — MyST's executable-plugin loader resolves the configured path literally
-(no PATH search), so the path must match where `uv sync` puts it on your platform:
-
-- Windows: `.venv/Scripts/myst-baker-plugin.exe` (the default in `myst.yml`)
-- Linux/Mac: `.venv/bin/myst-baker-plugin` — update the `path` in `myst.yml`'s `plugins` entry to this
-
-Then build the docs with:
-
-```
-uv run myst build
-```
+- [Installation](docs/installation.md) — add myst-baker to your own MyST
+  project, or set up this repo for development.
+- [Guide](docs/guide/inputs.md) — input widgets, `calc` blocks, and plot
+  outputs.
+- [Examples](docs/examples/gallery.md) — full worked pages.
+- [Changelog](docs/changelog.md)
+- [Authors](docs/authors.md)
