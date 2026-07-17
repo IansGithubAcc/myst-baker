@@ -37,14 +37,14 @@ Here's the whole pipeline in five lines: one slider, one function, one plot.
 :max: 3
 :step: 0.5
 ```
-
+````
 ```python{calc}
 def scale_line(k):
     x = list(range(-5, 6))
     y = [k * xi for xi in x]
     return x, y
 ```
-
+````md
 ```{plot} scatter
 :data: scale_line
 :mode: lines
@@ -58,13 +58,6 @@ And here's that same block, live — drag the slider:
 :min: -3
 :max: 3
 :step: 0.5
-```
-
-```python{calc}
-def scale_line(k):
-    x = list(range(-5, 6))
-    y = [k * xi for xi in x]
-    return x, y
 ```
 
 ```{plot} scatter

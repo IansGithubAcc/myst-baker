@@ -25,7 +25,7 @@ precomputed data.
 :step: 0.5
 ```
 
-```python{calc}
+```python{calc:hide}
 import math
 
 def damped_oscillator(amplitude, damping, frequency):

@@ -150,11 +150,62 @@ multi-plot pages.
 Give `:data:` a comma-separated list of `calc` function names instead of
 one, and they render as separate traces on the *same* plot rather than
 separate plots — each function still runs independently, but Plotly draws
-them together, grouped side by side for `bar` traces. The functions must
+them together. The functions must
 share the same parameters, since one control panel drives all of them.
 Each trace's legend name defaults to its function name (underscores
 become spaces); a function returning a dict can set its own `"name"` to
 override that default.
+
+````
+```{input-slider} amplitude_1
+:value: 1
+:min: 0
+:max: 2
+:step: 0.5
+```
+```{input-slider} amplitude_2
+:value: 1
+:min: 0
+:max: 2
+:step: 0.5
+```
+````
+
+```{input-slider} amplitude_1
+:value: 1
+:min: 0
+:max: 2
+:step: 0.5
+```
+```{input-slider} amplitude_2
+:value: 1
+:min: 0
+:max: 2
+:step: 0.5
+```
+```python{calc}
+import math
+
+def cosine_curve(amplitude_1, amplitude_2):
+    x = list(range(-10, 11))
+    y = [amplitude_1 * math.cos(xi / 3) for xi in x]
+    return x, y
+
+def sine_curve(amplitude_1, amplitude_2):
+    x = list(range(-10, 11))
+    y = [amplitude_2 * math.sin(xi / 3) for xi in x]
+    return x, y
+```
+````
+```{plot} scatter
+:data: cosine_curve,sine_curve
+```
+````
+```{plot} scatter
+:data: cosine_curve,sine_curve
+```
+
+When using multiple traces with `bar` plots they will be grouped side by side.
 
 ````md
 ```{input-slider} growth
@@ -163,7 +214,7 @@ override that default.
 :max: 0.5
 :step: 0.05
 ```
-
+````
 ```python{calc}
 def revenue_by_quarter(growth):
     quarters = ["Q1", "Q2", "Q3", "Q4"]
@@ -177,7 +228,7 @@ def expenses_by_quarter(growth):
     expenses = [70 * (1 + growth * 0.6) ** i for i in range(4)]
     return quarters, expenses
 ```
-
+````
 ```{plot} bar
 :data: revenue_by_quarter,expenses_by_quarter
 ```
@@ -188,20 +239,6 @@ def expenses_by_quarter(growth):
 :min: -0.2
 :max: 0.5
 :step: 0.05
-```
-
-```python{calc}
-def revenue_by_quarter(growth):
-    quarters = ["Q1", "Q2", "Q3", "Q4"]
-    revenue = [100 * (1 + growth) ** i for i in range(4)]
-    return quarters, revenue
-```
-
-```python{calc}
-def expenses_by_quarter(growth):
-    quarters = ["Q1", "Q2", "Q3", "Q4"]
-    expenses = [70 * (1 + growth * 0.6) ** i for i in range(4)]
-    return quarters, expenses
 ```
 
 ```{plot} bar
@@ -222,14 +259,14 @@ unpacked positionally."
 :max: 3
 :step: 0.5
 ```
-
+````
 ```python{calc}
 def scaled_samples(spread):
     base = [-2, -1.5, -1, -0.5, -0.5, 0, 0, 0, 0.5, 0.5, 1, 1.5, 2]
     samples = [spread * b for b in base]
     return (samples,)
 ```
-
+````
 ```{plot} histogram
 :data: scaled_samples
 ```
@@ -240,13 +277,6 @@ def scaled_samples(spread):
 :min: 0.5
 :max: 3
 :step: 0.5
-```
-
-```python{calc}
-def scaled_samples(spread):
-    base = [-2, -1.5, -1, -0.5, -0.5, 0, 0, 0, 0.5, 0.5, 1, 1.5, 2]
-    samples = [spread * b for b in base]
-    return (samples,)
 ```
 
 ```{plot} histogram
@@ -266,7 +296,7 @@ shape as a scatter's `(x, y)` — just a different pair of names.
 :max: 40
 :step: 5
 ```
-
+````
 ```python{calc}
 def budget_allocation(marketing_share):
     remaining = 100 - marketing_share
@@ -274,7 +304,7 @@ def budget_allocation(marketing_share):
     values = [marketing_share, remaining * 0.6, remaining * 0.4]
     return labels, values
 ```
-
+````
 ```{plot} pie
 :data: budget_allocation
 ```
@@ -285,14 +315,6 @@ def budget_allocation(marketing_share):
 :min: 5
 :max: 40
 :step: 5
-```
-
-```python{calc}
-def budget_allocation(marketing_share):
-    remaining = 100 - marketing_share
-    labels = ["Marketing", "Engineering", "Operations"]
-    values = [marketing_share, remaining * 0.6, remaining * 0.4]
-    return labels, values
 ```
 
 ```{plot} pie
@@ -312,7 +334,7 @@ per category. The same data feeds both trace types below.
 :max: 2
 :step: 0.5
 ```
-
+````
 ```python{calc}
 def quarterly_measurements(shift):
     categories = []
@@ -329,7 +351,7 @@ def quarterly_measurements(shift):
             measurements.append(v + shift)
     return categories, measurements
 ```
-
+````
 ```{plot} box
 :data: quarterly_measurements
 ```
@@ -344,23 +366,6 @@ def quarterly_measurements(shift):
 :min: -2
 :max: 2
 :step: 0.5
-```
-
-```python{calc}
-def quarterly_measurements(shift):
-    categories = []
-    measurements = []
-    base = {
-        "Q1": [10, 11, 9, 10.5, 12],
-        "Q2": [11, 12, 10, 13, 11.5],
-        "Q3": [13, 14, 12.5, 15, 13],
-        "Q4": [12, 13, 11, 12.5, 14],
-    }
-    for quarter, values in base.items():
-        for v in values:
-            categories.append(quarter)
-            measurements.append(v + shift)
-    return categories, measurements
 ```
 
 ```{plot} box

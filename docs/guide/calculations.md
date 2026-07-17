@@ -34,14 +34,14 @@ interest curve:
 :max: 0.2
 :step: 0.01
 ```
-
+````
 ```python{calc}
 def compound_growth(rate):
     years = list(range(0, 11))
     balance = [1000 * (1 + rate) ** t for t in years]
     return years, balance
 ```
-
+````
 ```{plot} scatter
 :data: compound_growth
 :mode: lines
@@ -53,13 +53,6 @@ def compound_growth(rate):
 :min: 0
 :max: 0.2
 :step: 0.01
-```
-
-```python{calc}
-def compound_growth(rate):
-    years = list(range(0, 11))
-    balance = [1000 * (1 + rate) ** t for t in years]
-    return years, balance
 ```
 
 ```{plot} scatter
@@ -82,23 +75,21 @@ annual compounding and continuous compounding.
 :max: 0.2
 :step: 0.01
 ```
-
+````
 ```python{calc}
+import math
+
 def compound_growth(rate):
     years = list(range(0, 11))
     balance = [1000 * (1 + rate) ** t for t in years]
     return years, balance
-```
-
-```python{calc}
-import math
 
 def compound_continuous(rate):
     years = list(range(0, 11))
     balance = [1000 * math.exp(rate * t) for t in years]
     return years, balance
 ```
-
+````
 ```{plot} scatter
 :data: compound_growth
 :mode: markers
@@ -115,22 +106,6 @@ def compound_continuous(rate):
 :min: 0
 :max: 0.2
 :step: 0.01
-```
-
-```python{calc}
-def compound_growth(rate):
-    years = list(range(0, 11))
-    balance = [1000 * (1 + rate) ** t for t in years]
-    return years, balance
-```
-
-```python{calc}
-import math
-
-def compound_continuous(rate):
-    years = list(range(0, 11))
-    balance = [1000 * math.exp(rate * t) for t in years]
-    return years, balance
 ```
 
 Discrete compounding (markers):
@@ -170,7 +145,7 @@ returning `{"z": [[...]]}`:
 :max: 6
 :step: 0.5
 ```
-
+````
 ```python{calc}
 import math
 
@@ -187,7 +162,7 @@ def gaussian_heatmap(spread):
         ]
     }
 ```
-
+````
 ```{plot} heatmap
 :data: gaussian_heatmap
 ```
@@ -198,23 +173,6 @@ def gaussian_heatmap(spread):
 :min: 1
 :max: 6
 :step: 0.5
-```
-
-```python{calc}
-import math
-
-def gaussian_heatmap(spread):
-    size = 15
-    center = size // 2
-    return {
-        "z": [
-            [
-                math.exp(-((x - center) ** 2 + (y - center) ** 2) / (2 * spread**2))
-                for x in range(size)
-            ]
-            for y in range(size)
-        ]
-    }
 ```
 
 ```{plot} heatmap
@@ -254,8 +212,8 @@ def scale_line(k):
 ```
 ````
 
-And here's that block, live — slider and chart both work as usual, but
-there's no calc source between them:
+And here's that block, live. Please note that the definition above is just a citation.
+The actual python function is defined below this text and is hidden.
 
 ```{input-slider} k
 :value: 1
@@ -278,5 +236,5 @@ def scale_line(k):
 ```{tip}
 `:hide` is per-block, not all-or-nothing for a page — a hidden and a
 visible `calc` block can sit side by side, as in the
-[revenue vs. expenses](../examples/revenue-vs-expenses.md) example.
+[Damped oscillator, two views](../examples/damped-oscillator.md) example.
 ```

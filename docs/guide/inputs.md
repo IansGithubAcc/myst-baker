@@ -38,14 +38,14 @@ their values. Here, `a` and `b` together shape a parabola.
 :max: 3
 :step: 1
 ```
-
+````
 ```python{calc}
 def parabola(a, b):
     x = [i / 2 for i in range(-10, 11)]
     y = [a * xi**2 + b for xi in x]
     return x, y
 ```
-
+````
 ```{plot} scatter
 :data: parabola
 :mode: lines
@@ -66,13 +66,6 @@ def parabola(a, b):
 :step: 1
 ```
 
-```python{calc}
-def parabola(a, b):
-    x = [i / 2 for i in range(-10, 11)]
-    y = [a * xi**2 + b for xi in x]
-    return x, y
-```
-
 ```{plot} scatter
 :data: parabola
 :mode: lines
@@ -91,7 +84,7 @@ runs from -0.5 (growth) to 1.0 (decay) in steps of 0.05.
 :max: 1.0
 :step: 0.05
 ```
-
+````
 ```python{calc}
 import math
 
@@ -100,7 +93,7 @@ def damped_envelope(damping):
     y = [math.exp(-damping * xi) for xi in x]
     return x, y
 ```
-
+````
 ```{plot} scatter
 :data: damped_envelope
 :mode: lines
@@ -112,15 +105,6 @@ def damped_envelope(damping):
 :min: -0.5
 :max: 1.0
 :step: 0.05
-```
-
-```python{calc}
-import math
-
-def damped_envelope(damping):
-    x = [i / 5 for i in range(0, 26)]
-    y = [math.exp(-damping * xi) for xi in x]
-    return x, y
 ```
 
 ```{plot} scatter
@@ -146,7 +130,7 @@ on.
 ```{input-checkbox} inverted
 :value: false
 ```
-
+````
 ```python{calc}
 import math
 
@@ -156,7 +140,7 @@ def maybe_inverted_sine(inverted):
     y = [sign * math.sin(xi) for xi in x]
     return x, y
 ```
-
+````
 ```{plot} scatter
 :data: maybe_inverted_sine
 :mode: lines
@@ -165,16 +149,6 @@ def maybe_inverted_sine(inverted):
 
 ```{input-checkbox} inverted
 :value: false
-```
-
-```python{calc}
-import math
-
-def maybe_inverted_sine(inverted):
-    x = [i / 10 for i in range(-31, 32)]
-    sign = -1 if inverted else 1
-    y = [sign * math.sin(xi) for xi in x]
-    return x, y
 ```
 
 ```{plot} scatter
@@ -197,7 +171,7 @@ sine
 square
 sawtooth
 ```
-
+````
 ```python{calc}
 import math
 
@@ -212,7 +186,7 @@ def waveform_curve(waveform):
         y = [2 * ((xi / period) % 1) - 1 for xi in x]
     return x, y
 ```
-
+````
 ```{plot} scatter
 :data: waveform_curve
 :mode: lines
@@ -224,21 +198,6 @@ def waveform_curve(waveform):
 sine
 square
 sawtooth
-```
-
-```python{calc}
-import math
-
-def waveform_curve(waveform):
-    x = [i / 10 for i in range(-31, 32)]
-    if waveform == "sine":
-        y = [math.sin(xi) for xi in x]
-    elif waveform == "square":
-        y = [1.0 if math.sin(xi) >= 0 else -1.0 for xi in x]
-    else:
-        period = 2 * math.pi
-        y = [2 * ((xi / period) % 1) - 1 for xi in x]
-    return x, y
 ```
 
 ```{plot} scatter
