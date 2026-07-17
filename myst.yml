@@ -26,8 +26,8 @@ project:
     - type: executable
       # Generated directly by `uv sync` (see docs/installation.md). MyST resolves this as a
       # literal path, not a PATH search, so it must match where uv puts the launcher.
-      path: .venv/bin/myst-baker-plugin # Linux/macOS
-      # path: .venv/Scripts/myst-baker-plugin.exe # Windows
+      # path: .venv/bin/myst-baker-plugin # Linux/macOS
+      path: .venv/Scripts/myst-baker-plugin.exe # Windows
 site:
   template: book-theme
   options:

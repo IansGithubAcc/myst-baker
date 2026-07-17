@@ -32,16 +32,17 @@ Here's the whole pipeline in five lines: one slider, one function, one plot.
 
 ````md
 ```{input-slider} k
-:value: 1
+:value: 0
 :min: -3
 :max: 3
 :step: 0.5
 ```
 ````
 ```python{calc}
+import math
 def scale_line(k):
-    x = list(range(-5, 6))
-    y = [k * xi for xi in x]
+    x = [x * 0.1 for x in range(-60, 60)]
+    y = [math.cos(k + xi) for xi in x]
     return x, y
 ```
 ````md
@@ -54,7 +55,7 @@ def scale_line(k):
 And here's that same block, live — drag the slider:
 
 ```{input-slider} k
-:value: 1
+:value: 0
 :min: -3
 :max: 3
 :step: 0.5
