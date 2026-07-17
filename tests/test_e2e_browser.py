@@ -114,7 +114,7 @@ def test_slider_typed_value_reaching_grid_key_via_many_steps_from_origin(inputs_
 
     page.goto(inputs_page_url)
 
-    # content/inputs.md's live iframes: One slider (0), Two sliders (1),
+    # docs/guide/inputs.md's live iframes: One slider (0), Two sliders (1),
     # Fine steps and negative ranges (2), Checkbox (3), Dropdown (4).
     plot_frame = page.frame_locator("iframe").nth(2)
     plot_locator = plot_frame.locator(".js-plotly-plot").first
@@ -141,7 +141,7 @@ def test_dropdown_updates_plot_with_no_console_errors(inputs_page_url, page):
 
     page.goto(inputs_page_url)
 
-    # content/inputs.md's live iframes, in document order: One slider (0),
+    # docs/guide/inputs.md's live iframes, in document order: One slider (0),
     # Two sliders (1), Fine steps (2), Checkbox (3), Dropdown (4) -- the
     # "Three sliders" section was removed as redundant with "Two sliders",
     # shifting the dropdown example from the 6th to the 5th plot on the
@@ -182,7 +182,7 @@ def test_new_output_types_render_with_no_console_errors(outputs_page_url, page):
 
     page.goto(outputs_page_url)
 
-    # content/outputs.md's live plots, in document order: 3 scatter-mode
+    # docs/guide/outputs.md's live plots, in document order: 3 scatter-mode
     # plots, 1 bar, 1 histogram, 1 pie, 1 box, 1 violin = 8 total. Confirmed
     # empirically against the built page (including each trace's `.type`)
     # rather than assumed from document structure alone.
