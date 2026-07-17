@@ -84,5 +84,7 @@ def scale_line(k):
 - **[Plot outputs](guide/outputs.md)** — the different Plotly trace types
   (scatter, bar, histogram, pie, box, violin) and modes a `plot` block can
   render.
-- **[Gallery](examples/gallery.md)** — full worked examples that combine several
-  inputs, functions, and plots on one page.
+- **[Damped oscillator](examples/damped-oscillator.md)**,
+  **[projectile trajectory](examples/projectile-trajectory.md)**, and
+  **[revenue vs. expenses](examples/revenue-vs-expenses.md)** — worked
+  examples that combine several inputs, functions, and plots on one page.

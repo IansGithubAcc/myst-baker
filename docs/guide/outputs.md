@@ -139,8 +139,8 @@ def revenue_by_quarter(growth):
 :data: revenue_by_quarter
 ```
 
-See the [Gallery](../examples/gallery.md) for these pieces combined into larger,
-multi-plot examples.
+See the [examples](../examples/revenue-vs-expenses.md) for these pieces combined into larger,
+multi-plot pages.
 
 ## Histogram
 

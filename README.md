@@ -15,6 +15,6 @@ no Python running anywhere at page-view time.
   project, or set up this repo for development.
 - [Guide](docs/guide/inputs.md) — input widgets, `calc` blocks, and plot
   outputs.
-- [Examples](docs/examples/gallery.md) — full worked pages.
+- [Examples](docs/examples/damped-oscillator.md) — worked examples using the framework.
 - [Changelog](docs/changelog.md)
 - [Authors](docs/authors.md)
