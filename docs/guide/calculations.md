@@ -226,3 +226,57 @@ A dict return works for the six built-in trace types too — it's not
 exclusive to unsupported ones. Positional tuples are just a shorthand for
 the common cases; see [Plot outputs](outputs.md) for the full field list.
 ```
+
+## Hiding a calc block's source
+
+Add `:hide` to the tag and a `calc` block still runs — it's still exec'd
+into the page's namespace, still available to any `plot` block that
+names it — but its source never reaches the rendered page. Useful when a
+function is plumbing a `plot` needs rather than something worth reading:
+
+````md
+```{input-slider} k
+:value: 1
+:min: -3
+:max: 3
+:step: 0.5
+```
+
+```python{calc:hide}
+def scale_line(k):
+    x = list(range(-5, 6))
+    return x, [k * xi for xi in x]
+```
+
+```{plot} scatter
+:data: scale_line
+:mode: lines
+```
+````
+
+And here's that block, live — slider and chart both work as usual, but
+there's no calc source between them:
+
+```{input-slider} k
+:value: 1
+:min: -3
+:max: 3
+:step: 0.5
+```
+
+```python{calc:hide}
+def scale_line(k):
+    x = list(range(-5, 6))
+    return x, [k * xi for xi in x]
+```
+
+```{plot} scatter
+:data: scale_line
+:mode: lines
+```
+
+```{tip}
+`:hide` is per-block, not all-or-nothing for a page — a hidden and a
+visible `calc` block can sit side by side, as in the
+[revenue vs. expenses](../examples/revenue-vs-expenses.md) example.
+```
