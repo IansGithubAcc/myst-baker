@@ -14,6 +14,13 @@ just needs to return an `(x, y)` pair of equal-length sequences for the
 `plot` block that consumes it.
 ```
 
+```{tip}
+Add `:hide` inside the tag — `` ```python{calc:hide} `` — to keep a
+block's source out of the rendered page while it still executes into the
+page's calc namespace. Handy when a `calc` function exists purely to feed
+a `plot` block and isn't meant to be read as an example.
+```
+
 ## A single calculation
 
 There's nothing sine- or physics-specific about `calc` — any
