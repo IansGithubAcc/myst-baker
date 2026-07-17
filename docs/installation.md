@@ -27,6 +27,18 @@ myst-baker isn't published to PyPI yet. Until it is, install it from source
    uv add /path/to/myst-baker
    ```
 
+   With `pip` instead:
+
+   ```
+   pip install git+https://github.com/IansGithubAcc/myst-baker
+   ```
+
+   Or, from a local checkout:
+
+   ```
+   pip install /path/to/myst-baker
+   ```
+
 2. Point your project's `myst.yml` at the installed console script.
    Installing the package creates a `myst-baker-plugin` console-script entry
    point, but MyST's executable-plugin loader resolves the configured `path`
@@ -46,6 +58,9 @@ myst-baker isn't published to PyPI yet. Until it is, install it from source
    ```
    uv run myst build
    ```
+
+   (with `pip`, activate your virtual environment first, then run
+   `myst build` directly.)
 
    If the plugin path is wrong, MyST fails to resolve `input-slider`,
    `input-checkbox`, `input-dropdown`, and `plot` directives — double-check
