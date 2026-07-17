@@ -92,18 +92,23 @@ page).
 
 ## URL changes and test updates
 
-Moving pages changes their built routes (mystmd derives routes from file
-path relative to project root):
+Confirmed by reading mystmd's route-slugging code (`fileInfo2` in the
+bundled `myst.cjs`): by default a page's slug comes from its **basename
+only** — folder structure is ignored unless the project sets
+`urlFolders: true` in `myst.yml` (it doesn't, and this design doesn't add
+it). So moving pages into `docs/guide/` and `docs/examples/` does **not**
+change their built routes:
 
-- `/inputs/` → `/guide/inputs/`
-- `/outputs/` → `/guide/outputs/`
-- `/gallery/` → `/examples/gallery/`
+- `docs/guide/inputs.md` → still `/inputs/`
+- `docs/guide/outputs.md` → still `/outputs/`
+- `docs/examples/gallery.md` → still `/gallery/`
+- `docs/index.md` → still the site root (first `toc` entry)
 
-`tests/test_e2e_browser.py` hardcodes the old routes in its
-`inputs_page_url`/`outputs_page_url` fixtures (lines 42-48) and references
-`content/inputs.md` / `content/outputs.md` in explanatory comments (lines
-117, 144, 185). Both the fixture paths and the comments are updated to match
-the new `docs/guide/` paths and routes.
+`tests/test_e2e_browser.py`'s `inputs_page_url`/`outputs_page_url` fixtures
+(lines 42-48) need no changes. Its explanatory comments (lines 117, 144, 185)
+reference `content/inputs.md` / `content/outputs.md` by path and are updated
+to say `docs/guide/inputs.md` / `docs/guide/outputs.md` so they stay
+accurate, even though the fixtures themselves are untouched.
 
 Historical plan/spec documents under `docs/superpowers/` that mention
 `content/` (from prior development work) are left unchanged — they're a
