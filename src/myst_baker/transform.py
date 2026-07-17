@@ -79,23 +79,35 @@ _INPUT_CLIENT_SPECS = {
 }
 
 
-_CALC_FENCE_RE = re.compile(r"^(?P<lang>\w+)\{calc\}$")
+_CALC_FENCE_RE = re.compile(r"^(?P<lang>\w+)\{calc(?P<flags>(?::\w+)*)\}$")
+
+_KNOWN_CALC_FLAGS = {"hide"}
 
 
-def _calc_fence_lang(node):
-    """Return the declared language of a `<lang>{calc}` code fence, or
-    `None` if this code node isn't a calc fence at all.
+def _calc_fence_match(node):
+    """Return the regex match for a `<lang>{calc[:flag...]}` code fence's
+    info string, or `None` if this code node isn't a calc fence at all.
 
     mdast splits a fence's info string on the first whitespace: `lang`
     gets everything before it, `meta` everything after. With no space in
-    `python{calc}`, the whole string lands in `lang` and `meta` is empty;
-    with a space (`python {calc}`), `lang` is `python` and `meta` is
-    `{calc}`. Concatenating them back reconstructs the original info
-    string either way.
+    `python{calc}` or `python{calc:hide}`, the whole string lands in
+    `lang` and `meta` is empty; with a space (`python {calc}`), `lang` is
+    `python` and `meta` is `{calc}`. Concatenating them back reconstructs
+    the original info string either way.
     """
     info = (node.get("lang") or "") + (node.get("meta") or "")
-    match = _CALC_FENCE_RE.match(info)
-    return match.group("lang") if match else None
+    return _CALC_FENCE_RE.match(info)
+
+
+def _calc_fence_flags(match):
+    return [flag for flag in match.group("flags").split(":") if flag]
+
+
+def _is_hidden_calc_node(node):
+    if node.get("type") != "code":
+        return False
+    match = _calc_fence_match(node)
+    return match is not None and "hide" in _calc_fence_flags(match)
 
 
 def _collect_nodes(ast):
@@ -110,22 +122,30 @@ def _collect_nodes(ast):
             inputs[name] = _INPUT_PRECOMPUTE_SPECS[node_type](node)
             input_nodes[name] = node
         elif node_type == "code":
-            calc_lang = _calc_fence_lang(node)
-            if calc_lang is not None:
+            match = _calc_fence_match(node)
+            if match is not None:
+                calc_lang = match.group("lang")
                 if calc_lang != "python":
                     raise ValueError(
                         f"calc block declares language {calc_lang!r}, but "
                         f"only 'python' calc blocks are supported"
                     )
+                for flag in _calc_fence_flags(match):
+                    if flag not in _KNOWN_CALC_FLAGS:
+                        raise ValueError(
+                            f"calc block declares unknown flag {flag!r}; "
+                            f"recognized flags are {sorted(_KNOWN_CALC_FLAGS)}"
+                        )
                 exec(node["value"], calc_namespace)
 
     return inputs, input_nodes, calc_namespace
 
 
-def _replace_plots(node, replace_plot):
+def _rewrite_tree(node, replace_plot):
     """Return a copy of `node` with every descendant `myst-baker-plot` node (at any
-    depth) replaced by `replace_plot(plot_node)`. See `_iter_nodes` for why
-    this needs to recurse rather than only look at the immediate children.
+    depth) replaced by `replace_plot(plot_node)`, and every hidden calc `code`
+    node (see `_is_hidden_calc_node`) dropped entirely. See `_iter_nodes` for
+    why this needs to recurse rather than only look at the immediate children.
     """
     children = node.get("children")
     if children is None:
@@ -135,8 +155,10 @@ def _replace_plots(node, replace_plot):
     for child in children:
         if child.get("type") == "myst-baker-plot":
             new_children.append(replace_plot(child))
+        elif _is_hidden_calc_node(child):
+            continue
         else:
-            new_children.append(_replace_plots(child, replace_plot))
+            new_children.append(_rewrite_tree(child, replace_plot))
     return {**node, "children": new_children}
 
 
@@ -207,4 +229,4 @@ def transform_document(ast):
         html = render.render_plot(plot_node, grid_result, input_specs)
         return _iframe_node(html)
 
-    return _replace_plots(ast, replace_plot)
+    return _rewrite_tree(ast, replace_plot)

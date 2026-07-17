@@ -268,3 +268,92 @@ def test_transform_document_ignores_plain_python_code_fence():
     result = transform_document(ast)
 
     assert result["children"][-1]["type"] == "iframe"
+
+
+def test_transform_document_hides_calc_block_source_when_flagged():
+    input_node = {
+        "type": "myst-baker-input-slider",
+        "arg": "a",
+        "options": {"value": 1, "min": 0, "max": 2, "step": 1},
+        "body": "",
+    }
+    calc_node = {
+        "type": "code",
+        "lang": "python{calc:hide}",
+        "value": "def get_plot_data(a):\n    return a, a * 2\n",
+    }
+    plot_node = {
+        "type": "myst-baker-plot",
+        "arg": "scatter",
+        "options": {"data": "get_plot_data"},
+        "body": "",
+    }
+
+    result = transform_document(_page_ast(input_node, calc_node, plot_node))
+
+    # The hidden calc block's `code` node must be gone -- only the slider
+    # and the rendered plot remain -- but the function it defined must
+    # still have run: the iframe HTML below still reflects its output.
+    children_types = [child["type"] for child in result["children"]]
+    assert children_types == ["myst-baker-input-slider", "iframe"]
+
+    iframe_node = result["children"][1]
+    html = _decode_iframe_html(iframe_node)
+    assert '"0": {"x": 0, "y": 0}' in html
+    assert '"1": {"x": 1, "y": 2}' in html
+    assert '"2": {"x": 2, "y": 4}' in html
+
+
+def test_transform_document_keeps_unflagged_calc_block_alongside_hidden_one():
+    input_node = {
+        "type": "myst-baker-input-slider",
+        "arg": "a",
+        "options": {"value": 1, "min": 0, "max": 1, "step": 1},
+        "body": "",
+    }
+    visible_calc_node = _calc_node("def visible_fn(a):\n    return a, a\n")
+    hidden_calc_node = {
+        "type": "code",
+        "lang": "python{calc:hide}",
+        "value": "def hidden_fn(a):\n    return a, a * 2\n",
+    }
+    plot_node = {
+        "type": "myst-baker-plot",
+        "arg": "scatter",
+        "options": {"data": "hidden_fn"},
+        "body": "",
+    }
+
+    ast = {
+        "type": "root",
+        "children": [input_node, visible_calc_node, hidden_calc_node, plot_node],
+    }
+
+    result = transform_document(ast)
+
+    # The visible block's `code` node survives; the hidden one is dropped.
+    children_types = [child["type"] for child in result["children"]]
+    assert children_types == ["myst-baker-input-slider", "code", "iframe"]
+
+
+def test_transform_document_raises_for_unknown_calc_flag():
+    input_node = {
+        "type": "myst-baker-input-slider",
+        "arg": "a",
+        "options": {"value": 1, "min": 0, "max": 1, "step": 1},
+        "body": "",
+    }
+    calc_node = {
+        "type": "code",
+        "lang": "python{calc:bogus}",
+        "value": "def f(a):\n    return a, a\n",
+    }
+    plot_node = {
+        "type": "myst-baker-plot",
+        "arg": "scatter",
+        "options": {"data": "f"},
+        "body": "",
+    }
+
+    with pytest.raises(ValueError, match="unknown flag 'bogus'"):
+        transform_document(_page_ast(input_node, calc_node, plot_node))
