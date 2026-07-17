@@ -4,9 +4,17 @@ version = "0.1.0"
 description = "Precomputed interactive docs via a MyST executable plugin"
 readme = "README.md"
 requires-python = ">=3.13"
+license = "MIT"
+authors = [
+    { name = "Ian Mullens", email = "imullens@hes-heerema.com" },
+]
 dependencies = [
     "mystmd",
 ]
+
+[project.urls]
+Homepage = "https://github.com/IansGithubAcc/myst-baker"
+Repository = "https://github.com/IansGithubAcc/myst-baker"
 
 [project.scripts]
 myst-baker-plugin = "myst_baker.plugin:main"
