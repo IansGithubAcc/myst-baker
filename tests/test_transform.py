@@ -82,7 +82,7 @@ def test_transform_document_finds_plot_node_wrapped_in_block_node():
     # scanner that only looks at `ast["children"]` (or otherwise fails to
     # recurse into nested `children`) finds nothing here and silently leaves
     # the myst-baker-plot node untransformed -- exactly the bug fixed in
-    # transform.py's `_iter_nodes`/`_replace_plots`. This test must fail if
+    # transform.py's `_iter_nodes`/`_rewrite_tree`. This test must fail if
     # that recursion is ever reverted to shallow/immediate-children scanning.
     input_node = {
         "type": "myst-baker-input-slider",
