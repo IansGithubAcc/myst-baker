@@ -60,7 +60,7 @@ def compound_growth(rate):
 :mode: lines
 ```
 
-## Several calculations sharing one input
+### Several calculations sharing one input
 
 A page can hold as many `calc` blocks as it needs, and they can
 share input sliders freely — myst-baker just matches each function's parameter

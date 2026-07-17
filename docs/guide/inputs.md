@@ -78,7 +78,7 @@ def parabola(a, b):
 :mode: lines
 ```
 
-## Fine steps and negative ranges
+### Fine steps and negative ranges
 
 Slider options aren't limited to small integer ranges — `:step:` accepts
 decimals and `:min:`/`:max:` can straddle zero. Here, a damping coefficient
