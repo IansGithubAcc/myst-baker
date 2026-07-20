@@ -49,7 +49,13 @@ INPUT_DROPDOWN_DIRECTIVE = {
 PLOT_DIRECTIVE = {
     "name": "plot",
     "doc": "A Plotly output block. The argument is a Plotly trace type (e.g. scatter).",
-    "arg": {"type": "string", "doc": "Plotly trace type"},
+    "arg": {
+        "type": "string",
+        "doc": (
+            "Plotly trace type (e.g. scatter), or 'figure' for a full "
+            "custom Plotly figure returned by the calc function"
+        ),
+    },
     "options": {
         "data": {
             "type": "string",

@@ -54,6 +54,26 @@ URL rather than `pip install myst-baker` / `uv add myst-baker`.
    the path matches your virtual environment's actual layout (it changes
    between Windows and Linux/Mac, and between package managers).
 
+## Optional: full Plotly figures
+
+`{plot} figure` blocks (see the [outputs guide](guide/outputs.md)) let
+a calc function build a complete Plotly figure instead of a single
+trace. If it does so using `plotly.graph_objects` or `plotly.express`
+directly, install the optional `plotly` extra alongside myst-baker:
+
+```
+uv add "myst-baker[plotly]"
+```
+
+or with `pip`:
+
+```
+pip install "myst-baker[plotly]"
+```
+
+This isn't required if a calc function instead returns a plain
+`{"data": [...], "layout": {...}}` dict by hand.
+
 ## Developing this repo
 
 Clone the repo, then:

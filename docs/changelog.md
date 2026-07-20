@@ -3,6 +3,17 @@
 All notable changes to myst-baker are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Added
+
+- A `` `{plot} figure` `` mode for full custom Plotly figures: a calc
+  function can return a complete `plotly.graph_objects`/`plotly.express`
+  figure (via the optional `myst-baker[plotly]` extra) or a hand-written
+  `{"data": [...], "layout": {...}}` dict, giving full control over
+  titles, axis labels, tick formatting, annotations, and multi-trace
+  layouts that trace-type-only `plot` blocks don't expose.
+
 ## 0.1.0
 
 Initial release.

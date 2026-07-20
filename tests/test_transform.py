@@ -450,3 +450,38 @@ def test_transform_document_raises_for_unknown_calc_flag():
 
     with pytest.raises(ValueError, match="unknown flag 'bogus'"):
         transform_document(_page_ast(input_node, calc_node, plot_node))
+
+
+def test_transform_document_supports_figure_mode_with_plain_dict_return():
+    input_node = {
+        "type": "myst-baker-input-slider",
+        "arg": "offset",
+        "options": {"value": 0, "min": 0, "max": 1, "step": 1},
+        "body": "",
+    }
+    calc_node = _calc_node(
+        "def make_figure(offset):\n"
+        "    return {'data': [{'type': 'scatter', 'x': [0, 1], 'y': [offset, offset + 1]}], "
+        "'layout': {'title': {'text': 'Example'}}}\n"
+    )
+    plot_node = {
+        "type": "myst-baker-plot",
+        "arg": "figure",
+        "options": {"data": "make_figure"},
+        "body": "",
+    }
+
+    result = transform_document(_page_ast(input_node, calc_node, plot_node))
+
+    html = _decode_iframe_html(result["children"][-1])
+    _, _, grid, trace_type, _ = _decode_plot_call_args(html)
+
+    assert trace_type == "figure"
+    assert grid["0"] == {
+        "data": [{"type": "scatter", "x": [0, 1], "y": [0, 1]}],
+        "layout": {"title": {"text": "Example"}},
+    }
+    assert grid["1"] == {
+        "data": [{"type": "scatter", "x": [0, 1], "y": [1, 2]}],
+        "layout": {"title": {"text": "Example"}},
+    }
