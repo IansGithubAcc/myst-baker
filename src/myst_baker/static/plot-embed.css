@@ -1,0 +1,17 @@
+/* book-theme renders every `iframe` mdast node (see transform.py's
+   `_iframe_node`) inside a `div.relative.inline-block` sized purely by
+   `padding-bottom: 60%` of that div's *width* -- a fixed 5:3 box, with no way
+   to request a taller one from the node itself (renderer ignores our style/
+   class entirely). On narrow viewports that box is short in absolute pixels,
+   but the Tweakpane controls stacked above the Plotly chart inside our plot
+   iframes take a roughly fixed pixel height regardless of screen width, so
+   the chart gets squashed into whatever little room is left. Overriding to a
+   viewport-height-based box on narrow screens gives it room to breathe.
+   Scoped to our own `data:` URI iframes (by `src` prefix) so other iframe
+   embeds keep their normal 5:3 box. */
+@media (max-width: 640px) {
+  .relative.inline-block:has(> iframe[src^="data:text/html;base64,"]) {
+    padding-bottom: 0 !important;
+    height: 55vh !important;
+  }
+}

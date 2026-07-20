@@ -32,4 +32,5 @@ site:
   template: book-theme
   options:
     favicon: favicon.ico
-  #   logo: site_logo.png
+    style: src/myst_baker/static/plot-embed.css
+    logo: docs/site_logo.png
