@@ -82,3 +82,7 @@ And here's that same block, live — drag the slider:
   **[projectile trajectory](examples/projectile-trajectory.md)**, and
   **[revenue vs. expenses](examples/revenue-vs-expenses.md)** — worked
   examples that combine several inputs, functions, and plots on one page.
+- **[Two-source potential field](examples/potential-field-contour.md)** —
+  a `{plot} figure` block combining a labeled contour trace, a scatter
+  overlay marking the sources, and a dynamic annotation from one `calc`
+  function.

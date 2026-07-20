@@ -20,6 +20,7 @@ project:
         - file: docs/examples/damped-oscillator.md
         - file: docs/examples/projectile-trajectory.md
         - file: docs/examples/revenue-vs-expenses.md
+        - file: docs/examples/potential-field-contour.md
     - file: docs/changelog.md
     - file: docs/authors.md
   plugins:
