@@ -31,3 +31,30 @@ def test_trace_data_zips_tuple_for_box_and_violin():
 def test_trace_data_raises_for_unknown_trace_type_without_dict():
     with pytest.raises(ValueError, match="unknown-type"):
         _trace_data([1, 2], "unknown-type")
+
+
+def test_trace_data_passes_figure_dict_through_unchanged():
+    # Already true today (the generic dict branch doesn't check trace_type
+    # at all) -- this locks the behavior in rather than driving new code.
+    figure = {
+        "data": [{"type": "scatter", "x": [1, 2], "y": [3, 4]}],
+        "layout": {"title": {"text": "t"}},
+    }
+    assert _trace_data(figure, "figure") == figure
+
+
+def test_trace_data_raises_type_error_for_invalid_figure_return():
+    with pytest.raises(TypeError, match="plotly figure"):
+        _trace_data([1, 2], "figure")
+
+
+def test_trace_data_serializes_real_plotly_figure_and_strips_default_template():
+    go = pytest.importorskip("plotly.graph_objects")
+
+    figure = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[4, 5, 6])])
+    figure.update_layout(title="Example")
+
+    result = _trace_data(figure, "figure")
+
+    assert result["data"] == [{"x": [1, 2, 3], "y": [4, 5, 6], "type": "scatter"}]
+    assert result["layout"] == {"title": {"text": "Example"}}

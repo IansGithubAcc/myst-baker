@@ -19,7 +19,24 @@ TRACE_FIELDS = {
 }
 
 
+def _figure_json(value):
+    if hasattr(value, "to_plotly_json"):
+        import plotly.io as pio
+
+        result = json.loads(pio.to_json(value))
+        result.get("layout", {}).pop("template", None)
+        return result
+    if isinstance(value, dict):
+        return value
+    raise TypeError(
+        f"calc function for a `{{plot}} figure` block must return a plotly "
+        f"figure or a {{'data': [...], 'layout': {{...}}}} dict, got {type(value)!r}"
+    )
+
+
 def _trace_data(value, trace_type):
+    if trace_type == "figure":
+        return _figure_json(value)
     if isinstance(value, dict):
         return value
     if trace_type not in TRACE_FIELDS:

@@ -12,6 +12,9 @@ dependencies = [
     "mystmd",
 ]
 
+[project.optional-dependencies]
+plotly = ["plotly>=5"]
+
 [project.urls]
 Homepage = "https://github.com/IansGithubAcc/myst-baker"
 Repository = "https://github.com/IansGithubAcc/myst-baker"
@@ -23,6 +26,7 @@ myst-baker-plugin = "myst_baker.plugin:main"
 dev = [
     "pytest>=8.0",
     "pytest-playwright>=0.5",
+    "plotly>=5",
 ]
 
 [build-system]
