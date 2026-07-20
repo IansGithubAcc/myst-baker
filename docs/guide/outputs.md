@@ -407,7 +407,7 @@ its own styling.
 :max: 3
 :step: 0.25
 ```
-
+````
 ```python{calc}
 import math
 import plotly.graph_objects as go
@@ -419,14 +419,14 @@ def phase_shifted_wave(phase):
     fig.update_layout(
         title="Phase-shifted wave",
         xaxis_title="x",
-        yaxis_title="sin(x/3 + phase)",
+        yaxis_title='sin(x/3 + phase)',
         annotations=[
             dict(x=0, y=y[10], text=f"phase = {phase:.2f}", showarrow=True, arrowhead=2)
         ],
     )
     return fig
 ```
-
+````
 ```{plot} figure
 :data: phase_shifted_wave
 ```
@@ -437,25 +437,6 @@ def phase_shifted_wave(phase):
 :min: -3
 :max: 3
 :step: 0.25
-```
-
-```python{calc}
-import math
-import plotly.graph_objects as go
-
-def phase_shifted_wave(phase):
-    x = list(range(-10, 11))
-    y = [math.sin(xi / 3 + phase) for xi in x]
-    fig = go.Figure(data=[go.Scatter(x=x, y=y, mode="lines")])
-    fig.update_layout(
-        title="Phase-shifted wave",
-        xaxis_title="x",
-        yaxis_title="sin(x/3 + phase)",
-        annotations=[
-            dict(x=0, y=y[10], text=f"phase = {phase:.2f}", showarrow=True, arrowhead=2)
-        ],
-    )
-    return fig
 ```
 
 ```{plot} figure
