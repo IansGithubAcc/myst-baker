@@ -100,6 +100,33 @@ pandas Series, and datetime values that a raw `go.Figure` may hold
 internally; `.to_plotly_json()` alone can still contain values
 `json.dumps` chokes on.
 
+CORRECTED (verified empirically: `pio.to_json` on a two-point scatter
+figure with nothing but a title serializes to 6724 bytes; the same
+figure with `fig.layout.template = None` set first serializes to 91
+bytes): `pio.to_json`/`.to_plotly_json()` always resolves and inlines
+`pio.templates.default` (the "plotly" theme's full color/font/colorbar
+style dict for every trace kind, not just the ones used) into
+`layout.template`, whether or not the calc function ever touched
+templating. This is fine for a one-off standalone export, but
+myst-baker bakes one such JSON blob *per grid combination* — for a
+figure varying over even a modest slider (dozens of steps), that's the
+6.6 KB of pure redundant styling metadata multiplied by every step,
+added to the page for no visual benefit: every myst-baker page already
+loads real Plotly.js from a pinned CDN version, whose own built-in
+defaults are exactly what `pio.templates["plotly"]` codifies, so the
+resolved template renders identically whether it's present in the JSON
+or simply absent. `_figure_json` therefore deletes
+`result["layout"]["template"]` (if present) unconditionally after
+parsing, for every figure-mode grid entry. This does mean a calc
+function that assigns a *named* non-default template (e.g.
+`fig.update_layout(template="plotly_dark")`) loses that specific theme
+— there is no cheap way to keep "which named theme" without either
+re-embedding its full resolved style dict (the bloat this avoids) or
+having myst-baker separately ship Plotly.js's own template registry
+(out of scope). Authors wanting a specific look should set colors/fonts
+directly in `layout` rather than via a named template. This constraint
+is called out in the documentation.
+
 `_trace_data(value, trace_type)` gets a new first branch:
 
 ```python
@@ -153,9 +180,9 @@ and untouched.
   `{"data": [...], "layout": {...}}` dict flows through
   `render_plot`/`transform_document` end-to-end with no plotly installed.
 - A test gated on plotly actually being importable
-  (`pytest.importorskip("plotly")`) that builds a real `go.Figure` (with
-  a numpy array field, to exercise `plotly.io.to_json`'s cleanup) and
-  confirms the rendered iframe HTML contains the resulting clean JSON.
+  (`pytest.importorskip`) that builds a real `go.Figure` and confirms
+  `_figure_json`'s result has no `layout.template` key and contains the
+  expected clean trace/layout data.
 - `_trace_data` raising `TypeError` for an unrecognized return value in
   figure mode (e.g. a plain tuple, which has no defined meaning here).
 - Existing trace-type tests (`scatter`, `bar`, `pie`, etc.) continue to
