@@ -457,28 +457,36 @@ rebuild before continuing.
 - [ ] **Step 4: Update the existing iframe-count assertion**
 
 In `tests/test_e2e_browser.py`, `test_new_output_types_render_with_no_console_errors`
-currently has this comment and assertion:
+currently has this comment and assertion (already corrected, ahead of this
+task, from a pre-existing off-by-one baseline bug that undercounted the
+"Multiple traces on one plot" section's scatter example — not something
+this task needs to touch beyond adding one more line):
 
 ```python
     # docs/guide/outputs.md's live plots, in document order: 3 scatter-mode
-    # plots, 1 bar, 1 combined-trace bar (revenue + expenses), 1 histogram,
-    # 1 pie, 1 box, 1 violin = 9 total. Confirmed empirically against the
-    # built page (including each trace's `.type`) rather than assumed from
-    # document structure alone.
+    # plots, 1 bar, 1 combined-trace scatter (cosine + sine), 1 combined-trace
+    # bar (revenue + expenses), 1 histogram, 1 pie, 1 box, 1 violin = 10
+    # total. CORRECTED (verified empirically against the built page, which
+    # shows 10 iframes -- confirmed by counting live, non-fenced `{plot}`
+    # blocks in outputs.md's source): the previous count of 9 omitted the
+    # "Multiple traces on one plot" section's *scatter* example
+    # (`:data: cosine_curve,sine_curve`) -- only its bar counterpart further
+    # down the same section was ever counted.
     iframe_count = page.locator("iframe").count()
-    assert iframe_count == 9
+    assert iframe_count == 10
 ```
 
 Replace it with:
 
 ```python
     # docs/guide/outputs.md's live plots, in document order: 3 scatter-mode
-    # plots, 1 bar, 1 combined-trace bar (revenue + expenses), 1 histogram,
-    # 1 pie, 1 box, 1 violin, 1 figure-mode (phase-shifted wave) = 10 total.
-    # Confirmed empirically against the built page (including each trace's
-    # `.type`) rather than assumed from document structure alone.
+    # plots, 1 bar, 1 combined-trace scatter (cosine + sine), 1 combined-trace
+    # bar (revenue + expenses), 1 histogram, 1 pie, 1 box, 1 violin,
+    # 1 figure-mode (phase-shifted wave) = 11 total. Confirmed empirically
+    # against the built page (including each trace's `.type`) rather than
+    # assumed from document structure alone.
     iframe_count = page.locator("iframe").count()
-    assert iframe_count == 10
+    assert iframe_count == 11
 ```
 
 - [ ] **Step 5: Add a browser test for the figure-mode plot**
@@ -494,10 +502,10 @@ def test_figure_mode_plot_renders_layout_and_updates(outputs_page_url, page):
 
     page.goto(outputs_page_url)
 
-    # The "Full Plotly figures" example is the 10th (last) iframe on the
+    # The "Full Plotly figures" example is the 11th (last) iframe on the
     # page -- see the updated count/order comment on
     # test_new_output_types_render_with_no_console_errors above.
-    plot_frame = page.frame_locator("iframe").nth(9)
+    plot_frame = page.frame_locator("iframe").nth(10)
     plot_locator = plot_frame.locator(".js-plotly-plot").first
     plot_locator.wait_for(state="visible")
 
@@ -528,8 +536,8 @@ def test_figure_mode_plot_renders_layout_and_updates(outputs_page_url, page):
 Run: `uv run pytest tests/test_e2e_browser.py -v`
 
 Expected: PASS for all tests, including the updated iframe-count
-assertion (now 10) and the new `test_figure_mode_plot_renders_layout_and_updates`.
-If the iframe count or the frame index (`nth(9)`) doesn't match reality,
+assertion (now 11) and the new `test_figure_mode_plot_renders_layout_and_updates`.
+If the iframe count or the frame index (`nth(10)`) doesn't match reality,
 run with `-v` and adjust both the assertion and the docstring/comment to
 match the actual built page rather than guessing again.
 
