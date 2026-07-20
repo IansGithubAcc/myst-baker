@@ -187,19 +187,53 @@ def test_new_output_types_render_with_no_console_errors(outputs_page_url, page):
 
     # docs/guide/outputs.md's live plots, in document order: 3 scatter-mode
     # plots, 1 bar, 1 combined-trace scatter (cosine + sine), 1 combined-trace
-    # bar (revenue + expenses), 1 histogram, 1 pie, 1 box, 1 violin = 10
-    # total. CORRECTED (verified empirically against the built page, which
-    # shows 10 iframes -- confirmed by counting live, non-fenced `{plot}`
-    # blocks in outputs.md's source): the previous count of 9 omitted the
-    # "Multiple traces on one plot" section's *scatter* example
-    # (`:data: cosine_curve,sine_curve`) -- only its bar counterpart further
-    # down the same section was ever counted.
+    # bar (revenue + expenses), 1 histogram, 1 pie, 1 box, 1 violin,
+    # 1 figure-mode (phase-shifted wave) = 11 total. Confirmed empirically
+    # against the built page (including each trace's `.type`) rather than
+    # assumed from document structure alone.
     iframe_count = page.locator("iframe").count()
-    assert iframe_count == 10
+    assert iframe_count == 11
 
     for i in range(iframe_count):
         frame = page.frame_locator("iframe").nth(i)
         frame.locator(".js-plotly-plot").first.wait_for(state="visible")
 
+    assert console_errors == []
+    assert page_errors == []
+
+
+def test_figure_mode_plot_renders_layout_and_updates(outputs_page_url, page):
+    console_errors = []
+    page.on("console", lambda msg: console_errors.append(msg.text) if msg.type == "error" else None)
+    page_errors = []
+    page.on("pageerror", lambda exc: page_errors.append(str(exc)))
+
+    page.goto(outputs_page_url)
+
+    # The "Full Plotly figures" example is the 11th (last) iframe on the
+    # page -- see the updated count/order comment on
+    # test_new_output_types_render_with_no_console_errors above.
+    plot_frame = page.frame_locator("iframe").nth(10)
+    plot_locator = plot_frame.locator(".js-plotly-plot").first
+    plot_locator.wait_for(state="visible")
+
+    # The calc function's own layout (title, axis titles, annotation) must
+    # have made it all the way through _figure_json/runtime.js's figure
+    # branch -- not just a bare, unstyled trace.
+    title_text = plot_locator.evaluate("el => el.layout.title.text")
+    assert title_text == "Phase-shifted wave"
+    assert plot_locator.evaluate("el => el.layout.annotations.length") == 1
+
+    before = plot_locator.evaluate("el => el.data[0].y.slice(0, 3)")
+
+    slider_input = plot_frame.locator(".tp-rotv input[type='text']").first
+    slider_input.fill("1")
+    slider_input.press("Enter")
+
+    page.wait_for_timeout(300)
+
+    after = plot_locator.evaluate("el => el.data[0].y.slice(0, 3)")
+
+    assert before != after
     assert console_errors == []
     assert page_errors == []

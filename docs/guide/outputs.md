@@ -375,3 +375,89 @@ def quarterly_measurements(shift):
 ```{plot} violin
 :data: quarterly_measurements
 ```
+
+## Full Plotly figures
+
+Every trace type above hands `plot` a single calc function whose return
+value is spread into one trace, with `plot`'s argument naming that
+trace's Plotly type. For full control over the chart — axis titles,
+tick formatting, annotations, or several differently-typed traces on
+one plot — give `plot` the reserved argument `figure` instead of a
+trace type, and have its calc function return a complete figure rather
+than a single trace's fields.
+
+```{warning}
+Figure mode only needs the optional `plotly` extra
+(`pip install myst-baker[plotly]` / `uv add "myst-baker[plotly]"`) if
+the calc function builds a real `plotly.graph_objects`/`plotly.express`
+figure. A calc function can also return a plain
+`{"data": [...], "layout": {...}}` dict by hand instead, with no extra
+install required.
+```
+
+A `figure` block's calc function isn't combinable with others —
+`:data:` names exactly one function — and `:mode:` (or any other
+directive option) is ignored, since the figure already fully specifies
+its own styling.
+
+````md
+```{input-slider} phase
+:value: 0
+:min: -3
+:max: 3
+:step: 0.25
+```
+
+```python{calc}
+import math
+import plotly.graph_objects as go
+
+def phase_shifted_wave(phase):
+    x = list(range(-10, 11))
+    y = [math.sin(xi / 3 + phase) for xi in x]
+    fig = go.Figure(data=[go.Scatter(x=x, y=y, mode="lines")])
+    fig.update_layout(
+        title="Phase-shifted wave",
+        xaxis_title="x",
+        yaxis_title="sin(x/3 + phase)",
+        annotations=[
+            dict(x=0, y=y[10], text=f"phase = {phase:.2f}", showarrow=True, arrowhead=2)
+        ],
+    )
+    return fig
+```
+
+```{plot} figure
+:data: phase_shifted_wave
+```
+````
+
+```{input-slider} phase
+:value: 0
+:min: -3
+:max: 3
+:step: 0.25
+```
+
+```python{calc}
+import math
+import plotly.graph_objects as go
+
+def phase_shifted_wave(phase):
+    x = list(range(-10, 11))
+    y = [math.sin(xi / 3 + phase) for xi in x]
+    fig = go.Figure(data=[go.Scatter(x=x, y=y, mode="lines")])
+    fig.update_layout(
+        title="Phase-shifted wave",
+        xaxis_title="x",
+        yaxis_title="sin(x/3 + phase)",
+        annotations=[
+            dict(x=0, y=y[10], text=f"phase = {phase:.2f}", showarrow=True, arrowhead=2)
+        ],
+    )
+    return fig
+```
+
+```{plot} figure
+:data: phase_shifted_wave
+```

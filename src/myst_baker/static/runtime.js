@@ -48,11 +48,21 @@ function mystBakerInitPlot(containerId, inputSpecs, grid, traceType, traceOption
   }
 
   function draw() {
+    const data = currentData();
+    if (traceType === 'figure') {
+      // A full figure already carries its own per-trace `type` and a
+      // complete `layout` (see render.py's _figure_json) -- no
+      // type/traceOptions merge here, unlike the trace-building path
+      // below; the whole point of figure mode is that the calc function
+      // has full control.
+      const layout = Object.assign({ autosize: true }, data.layout);
+      Plotly.react(plotEl, data.data, layout, { responsive: true });
+      return;
+    }
     // A single combined `calc` function's grid entry is a bare object (see
     // render.py); combining several into one plot makes it an array, one
     // trace object per function. Normalizing here keeps a single draw path
     // for both shapes instead of branching the whole function in two.
-    const data = currentData();
     const traces = (Array.isArray(data) ? data : [data]).map((d) =>
       Object.assign({ type: traceType }, d, traceOptions)
     );
