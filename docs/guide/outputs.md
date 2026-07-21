@@ -35,7 +35,7 @@ alone changes.
 :max: 2
 :step: 0.5
 ```
-
+````
 ```python{calc}
 import math
 
@@ -44,7 +44,7 @@ def cosine_curve(amplitude):
     y = [amplitude * math.cos(xi / 3) for xi in x]
     return x, y
 ```
-
+````
 ```{plot} scatter
 :data: cosine_curve
 :mode: lines
@@ -66,15 +66,6 @@ def cosine_curve(amplitude):
 :min: 0
 :max: 2
 :step: 0.5
-```
-
-```python{calc}
-import math
-
-def cosine_curve(amplitude):
-    x = list(range(-10, 11))
-    y = [amplitude * math.cos(xi / 3) for xi in x]
-    return x, y
 ```
 
 `:mode: lines` — a line chart:
@@ -111,14 +102,14 @@ A `bar` trace only needs categories on `x` and values on `y` — which a
 :max: 0.5
 :step: 0.05
 ```
-
+````
 ```python{calc}
 def revenue_by_quarter(growth):
     quarters = ["Q1", "Q2", "Q3", "Q4"]
     revenue = [100 * (1 + growth) ** i for i in range(4)]
     return quarters, revenue
 ```
-
+````
 ```{plot} bar
 :data: revenue_by_quarter
 ```
@@ -129,13 +120,6 @@ def revenue_by_quarter(growth):
 :min: -0.2
 :max: 0.5
 :step: 0.05
-```
-
-```python{calc}
-def revenue_by_quarter(growth):
-    quarters = ["Q1", "Q2", "Q3", "Q4"]
-    revenue = [100 * (1 + growth) ** i for i in range(4)]
-    return quarters, revenue
 ```
 
 ```{plot} bar

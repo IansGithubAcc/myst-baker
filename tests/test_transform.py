@@ -429,6 +429,81 @@ def test_transform_document_keeps_unflagged_calc_block_alongside_hidden_one():
     assert children_types == ["myst-baker-input-slider", "code", "iframe"]
 
 
+def test_transform_document_scopes_calc_functions_to_nearest_preceding_definition():
+    # Regression test: docs/guide/outputs.md defines a `cosine_curve(amplitude)`
+    # function early in the page, uses it in three scatter plots, and later
+    # defines an UNRELATED `cosine_curve(amplitude_1, amplitude_2)` function
+    # (in a different section, demonstrating multiple traces on one plot).
+    # Both calc blocks were exec'd into one page-wide namespace dict before
+    # any plot was resolved, so the second definition silently clobbered the
+    # first for every plot referencing the name `cosine_curve` -- including
+    # the three earlier plots, which ended up wired to amplitude_1/
+    # amplitude_2 sliders instead of the single amplitude slider physically
+    # above them. Each plot must instead bind to whichever `cosine_curve`
+    # was most recently defined *before* it in document order.
+    amplitude_input = {
+        "type": "myst-baker-input-slider",
+        "arg": "amplitude",
+        "options": {"value": 1, "min": 0, "max": 2, "step": 1},
+        "body": "",
+    }
+    first_calc_node = _calc_node("def cosine_curve(amplitude):\n    return amplitude, amplitude * 2\n")
+    first_plot_node = {
+        "type": "myst-baker-plot",
+        "arg": "scatter",
+        "options": {"data": "cosine_curve"},
+        "body": "",
+    }
+
+    amplitude_1_input = {
+        "type": "myst-baker-input-slider",
+        "arg": "amplitude_1",
+        "options": {"value": 1, "min": 0, "max": 2, "step": 1},
+        "body": "",
+    }
+    amplitude_2_input = {
+        "type": "myst-baker-input-slider",
+        "arg": "amplitude_2",
+        "options": {"value": 1, "min": 0, "max": 2, "step": 1},
+        "body": "",
+    }
+    second_calc_node = _calc_node(
+        "def cosine_curve(amplitude_1, amplitude_2):\n    return amplitude_1, amplitude_2\n"
+    )
+    second_plot_node = {
+        "type": "myst-baker-plot",
+        "arg": "scatter",
+        "options": {"data": "cosine_curve"},
+        "body": "",
+    }
+
+    ast = {
+        "type": "root",
+        "children": [
+            amplitude_input,
+            first_calc_node,
+            first_plot_node,
+            amplitude_1_input,
+            amplitude_2_input,
+            second_calc_node,
+            second_plot_node,
+        ],
+    }
+
+    result = transform_document(ast)
+
+    first_iframe = result["children"][2]
+    second_iframe = result["children"][-1]
+
+    first_html = _decode_iframe_html(first_iframe)
+    _, first_input_specs, _, _, _ = _decode_plot_call_args(first_html)
+    assert [spec["name"] for spec in first_input_specs] == ["amplitude"]
+
+    second_html = _decode_iframe_html(second_iframe)
+    _, second_input_specs, _, _, _ = _decode_plot_call_args(second_html)
+    assert [spec["name"] for spec in second_input_specs] == ["amplitude_1", "amplitude_2"]
+
+
 def test_transform_document_raises_for_unknown_calc_flag():
     input_node = {
         "type": "myst-baker-input-slider",

@@ -8,24 +8,6 @@ def inspect_params(func):
     return list(inspect.signature(func).parameters)
 
 
-def _iter_nodes(node):
-    """Depth-first walk over every mdast node in the tree, including `node` itself.
-
-    CORRECTED (verified against real `myst build --debug`): real mystmd wraps
-    top-level content in an intermediate "block" node -- the document root's
-    `children` is `[{"type": "block", "children": [<our myst-baker-* nodes>]}]`, not
-    a flat list of the myst-baker-* nodes directly. Scanning only `ast["children"]`
-    (as this function originally did) never found any myst-baker nodes at all in a
-    real build, so the transform silently no-op'd (no error, but the plot
-    directive was never replaced with rendered HTML). Recursing into
-    `children` at any depth fixes this while remaining correct for the flat
-    ASTs used in the unit tests.
-    """
-    yield node
-    for child in node.get("children") or []:
-        yield from _iter_nodes(child)
-
-
 def _dropdown_choices(body):
     return [line.strip() for line in body.splitlines() if line.strip()]
 
@@ -110,42 +92,53 @@ def _is_hidden_calc_node(node):
     return match is not None and "hide" in _calc_fence_flags(match)
 
 
-def _collect_nodes(ast):
-    inputs = {}
-    input_nodes = {}
-    calc_namespace = {}
-
-    for node in _iter_nodes(ast):
-        node_type = node.get("type")
-        if node_type in _INPUT_PRECOMPUTE_SPECS:
-            name = node["arg"]
-            inputs[name] = _INPUT_PRECOMPUTE_SPECS[node_type](node)
-            input_nodes[name] = node
-        elif node_type == "code":
-            match = _calc_fence_match(node)
-            if match is not None:
-                calc_lang = match.group("lang")
-                if calc_lang != "python":
+def _process_state_node(node, inputs, input_nodes, calc_namespace):
+    """If `node` is an input or calc block, fold it into the mutable `inputs`/
+    `input_nodes`/`calc_namespace` state (exec'ing calc source as needed).
+    Every other node type is left untouched.
+    """
+    node_type = node.get("type")
+    if node_type in _INPUT_PRECOMPUTE_SPECS:
+        name = node["arg"]
+        inputs[name] = _INPUT_PRECOMPUTE_SPECS[node_type](node)
+        input_nodes[name] = node
+    elif node_type == "code":
+        match = _calc_fence_match(node)
+        if match is not None:
+            calc_lang = match.group("lang")
+            if calc_lang != "python":
+                raise ValueError(
+                    f"calc block declares language {calc_lang!r}, but "
+                    f"only 'python' calc blocks are supported"
+                )
+            for flag in _calc_fence_flags(match):
+                if flag not in _KNOWN_CALC_FLAGS:
                     raise ValueError(
-                        f"calc block declares language {calc_lang!r}, but "
-                        f"only 'python' calc blocks are supported"
+                        f"calc block declares unknown flag {flag!r}; "
+                        f"recognized flags are {sorted(_KNOWN_CALC_FLAGS)}"
                     )
-                for flag in _calc_fence_flags(match):
-                    if flag not in _KNOWN_CALC_FLAGS:
-                        raise ValueError(
-                            f"calc block declares unknown flag {flag!r}; "
-                            f"recognized flags are {sorted(_KNOWN_CALC_FLAGS)}"
-                        )
-                exec(node["value"], calc_namespace)
-
-    return inputs, input_nodes, calc_namespace
+            exec(node["value"], calc_namespace)
 
 
-def _rewrite_tree(node, replace_plot):
+def _rewrite_tree(node, replace_plot, inputs, input_nodes, calc_namespace):
     """Return a copy of `node` with every descendant `myst-baker-plot` node (at any
     depth) replaced by `replace_plot(plot_node)`, and every hidden calc `code`
-    node (see `_is_hidden_calc_node`) dropped entirely. See `_iter_nodes` for
-    why this needs to recurse rather than only look at the immediate children.
+    node (see `_is_hidden_calc_node`) dropped entirely.
+
+    Recurses into `children` at any depth (verified against a real `myst
+    build --debug`: mystmd wraps top-level content in an intermediate
+    "block" node, so the document root's `children` is `[{"type": "block",
+    "children": [<our myst-baker-* nodes>]}]`, not a flat list of the
+    myst-baker-* nodes directly -- scanning only immediate children misses
+    them entirely and silently no-ops).
+
+    This also folds each input/calc node into `inputs`/`input_nodes`/
+    `calc_namespace` (via `_process_state_node`) in the same depth-first,
+    document order, *before* resolving any plot node that follows it. This
+    makes a plot bind to whichever calc function/input block was most
+    recently defined before it in the document, rather than to whatever a
+    same-named later definition anywhere on the page happens to leave
+    behind.
     """
     children = node.get("children")
     if children is None:
@@ -156,9 +149,12 @@ def _rewrite_tree(node, replace_plot):
         if child.get("type") == "myst-baker-plot":
             new_children.append(replace_plot(child))
         elif _is_hidden_calc_node(child):
-            continue
+            _process_state_node(child, inputs, input_nodes, calc_namespace)
         else:
-            new_children.append(_rewrite_tree(child, replace_plot))
+            _process_state_node(child, inputs, input_nodes, calc_namespace)
+            new_children.append(
+                _rewrite_tree(child, replace_plot, inputs, input_nodes, calc_namespace)
+            )
     return {**node, "children": new_children}
 
 
@@ -209,7 +205,9 @@ def _iframe_node(html):
 
 
 def transform_document(ast):
-    inputs, input_nodes, calc_namespace = _collect_nodes(ast)
+    inputs = {}
+    input_nodes = {}
+    calc_namespace = {}
 
     def replace_plot(plot_node):
         function_names = [name.strip() for name in plot_node["options"]["data"].split(",")]
@@ -246,4 +244,4 @@ def transform_document(ast):
         html = render.render_plot(plot_node, grids, input_specs)
         return _iframe_node(html)
 
-    return _rewrite_tree(ast, replace_plot)
+    return _rewrite_tree(ast, replace_plot, inputs, input_nodes, calc_namespace)
